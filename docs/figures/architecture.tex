@@ -1,0 +1,95 @@
+\documentclass[border=0pt]{standalone}
+\input{pcp-style}
+
+\newcommand{\surface}[5]{
+  \draw[card] (0,#1-0.7) rectangle (3.3,#1+0.7);
+  \fill[lavender] (0.58,#1) circle (0.34);
+  \node[text=brand, font=\fontsize{10}{10}\selectfont] at (0.58,#1) {#2};
+  \node[anchor=west, align=left, inner sep=0pt] at (1.12,#1) {{\fsTitle\bfseries #3}\\[1pt]{\fsTiny\color{muted}#4}};
+  \coordinate (#5) at (3.3,#1);
+}
+
+\begin{document}
+\begin{tikzpicture}[figure]
+
+\node[anchor=west, text=muted] at (0,10.25) {\kicker{Surfaces}};
+\node[anchor=west, text=brand] at (6.0,10.25) {\kicker{PCP node \textperiodcentered\ your server}};
+\node[anchor=west, text=muted] at (14.2,10.25) {\kicker{External services}};
+
+\surface{8.7}{\faGlobe}{Web chat}{browser app}{s1}
+\surface{6.9}{\faTerminal}{CLI}{\code{pcp rerank}}{s2}
+\surface{5.1}{\faCode}{Claude Code}{MCP \textperiodcentered\ \code{pcp mcp}}{s3}
+\surface{3.3}{\faRobot}{Any agent}{HTTP + JSON}{s4}
+
+\draw[zone] (6.0,2.6) rectangle (11.6,9.4);
+\draw[rounded corners=4pt, fill=white, draw=brandlight, line width=0.7pt, dash pattern=on 2.5pt off 1.5pt] (6.2,2.82) rectangle (6.68,9.18);
+\node[rotate=90, text=brand, font=\fsTiny\bfseries] at (6.44,5.25) {\faShield*\ \ rate limit \textperiodcentered\ demo gate};
+
+\node[card, minimum width=4.5cm, minimum height=0.95cm] (propose) at (9.12,8.7)
+  {{\ttfamily\bfseries\color{brand}/v1/propose}\\[1pt]{\fsTiny\color{muted}demo agent: type, candidates, rerank}};
+\node[card, minimum width=4.5cm, minimum height=0.95cm] (rerank) at (9.12,6.9)
+  {{\ttfamily\bfseries\color{brand}/v1/rerank}\\[1pt]{\fsTiny\color{muted}open protocol: any agent's list}};
+\node[card, minimum width=4.5cm, minimum height=1.05cm] (nb) at (9.12,5.44)
+  {{\fsTitle\bfseries Naive Bayes type inference}\\[1pt]{\fsTiny\color{muted}task words \sto\ entity type, no LLM}};
+\node[card, minimum width=4.5cm, minimum height=1.7cm] (graph) at (9.12,3.6) {};
+\node[anchor=west, align=left, inner sep=0pt] at (7.1,3.6)
+  {{\fsTitle\bfseries PC graph}\\[2pt]{\fsTiny\color{muted}SQLite nodes + edges per PC}\\{\fsTiny\color{muted}Personalized PageRank}\\{\fsTiny\color{muted}learns from \code{/v1/graph/feedback}}};
+\begin{scope}[shift={(10.75,3.95)}, scale=0.5]
+  \draw[brandlight, line width=0.7pt] (-0.7,0.35) -- (0,0) -- (0.65,0.55) (0,0) -- (0.6,-0.5) (-0.7,0.35) -- (-0.55,-0.6) -- (0,0);
+  \fill[brand] (0,0) circle (0.2);
+  \fill[brandlight] (-0.7,0.35) circle (0.13) (0.65,0.55) circle (0.15) (0.6,-0.5) circle (0.12) (-0.55,-0.6) circle (0.1);
+\end{scope}
+
+\draw[llmcard] (14.2,7.45) rectangle (17.9,9.4);
+\node[anchor=north west, align=left, inner sep=0pt] at (14.45,9.2)
+  {{\fsTitle\bfseries\color{ink}LLM agent}\ \ {\fsTiny\color{llmdark}optional}\\[2pt]
+   {\fsTiny\color{muted}OpenAI \code{gpt-5.6-luna}}\\{\fsTiny\color{muted}Claude \textperiodcentered\ Ollama (local)}\\[2pt]
+   {\fsTiny\bfseries\color{llmdark}graph-only mode: 0 LLM tokens}};
+
+\draw[qloocard] (14.2,2.6) rectangle (17.9,7.15);
+\node[anchor=north west, align=left, inner sep=0pt] at (14.45,6.92)
+  {{\fsTitle\bfseries Qloo taste graph}\\[1pt]{\fsTiny\color{qloodark}cross-domain taste affinity}};
+\node[card, draw=qloo!60, minimum width=3.2cm] (mcp) at (16.05,5.35)
+  {{\ttfamily\bfseries\color{qloodark}qloo mcp}\\{\fsTiny\color{muted}official harness, stdio}};
+\node[card, draw=qloo!60, minimum width=3.2cm] (host) at (16.05,3.6)
+  {{\fsSmall\bfseries\color{qloodark}hackathon.api.qloo.com}\\{\fsTiny\color{muted}\code{/v2/insights}, \code{X-Api-Key}}};
+\draw[arrow, draw=qloo] (mcp) -- (host);
+
+\draw[zone] (0,0) rectangle (17.9,1.6);
+\node[anchor=west, align=left, inner sep=0pt] at (0.3,0.8)
+  {{\color{brand}\faLaptop\ \kicker{On-device}}\\[3pt]{\fsTitle\bfseries Personal Context (PC)}\\{\fsTitle\bfseries + conditional-logit model}};
+\node[chip, fill=white, text=ink, minimum height=0.85cm] at (8.1,0.8)
+  {\textbf{PC}: favorites, vetoes, $\mathbf{w}\in\mathbb{R}^3$\\{\color{muted}JSON held by the user}};
+\node[chip, fill=white, text=ink, minimum height=0.85cm] at (11.85,0.8)
+  {$p_i=\operatorname{softmax}_i(\mathbf{w}^{\top}\mathbf{x}_i)$\\{\color{muted}trains on every like / dislike}};
+\node[chip, fill=white, text=ink, minimum height=0.85cm] at (15.65,0.8)
+  {\faLock\ \textbf{AES-256-GCM export}\\{\color{muted}PBKDF2-SHA256, 310k iterations}};
+
+\draw[twoway, draw=brandlight] (1.65,1.6) -- (1.65,2.6);
+\node[lbl, anchor=west] at (1.8,2.1) {PC + model run inside every surface};
+
+\draw[twoway] (s1) -- (propose.west);
+\node[lbl, anchor=south] at (4.8,8.75) {\rarr task, PC id,\\public entity names\\+ 3 weights};
+\node[lbl, anchor=north] at (4.85,8.62) {\larr scored candidates};
+
+\draw[line width=0.9pt, draw=ink!65, rounded corners=4pt] (s4) -- (3.65,3.3) -- (3.65,6.9);
+\draw[line width=0.9pt, draw=ink!65] (s3) -- (3.65,5.1);
+\fill[ink!65] (3.65,5.1) circle (1.6pt) (3.65,6.9) circle (1.6pt);
+\draw[twoway] (s2) -- (rerank.west);
+\node[lbl, anchor=south] at (4.8,6.95) {\rarr candidates + priors\\public entity names\\+ 3 weights};
+\node[lbl, anchor=north] at (4.85,6.82) {\larr affinity scores\\+ distribution};
+
+\draw[twoway, dash pattern=on 3pt off 2pt] (propose.east) -- (14.2,8.7);
+\node[lbl, anchor=south] at (12.9,8.75) {\rarr task + type only\\(no user context)};
+\node[lbl, anchor=north] at (12.9,8.62) {\larr candidates + priors};
+
+\draw[twoway] (rerank.east) -- (14.2,6.9);
+\node[lbl, anchor=south] at (12.9,6.95) {\rarr \code{qloo\_rank}: options\\+ favorites (names)};
+\node[lbl, anchor=north] at (12.9,6.82) {\larr affinity scores};
+
+\draw[twoway] (graph.east) -- (14.2,3.6);
+\node[lbl, anchor=south] at (12.9,3.65) {\rarr \code{qloo\_recommend}:\\type + favorites};
+\node[lbl, anchor=north] at (12.9,3.52) {\larr candidates with\\affinity (graph-only)};
+
+\end{tikzpicture}
+\end{document}

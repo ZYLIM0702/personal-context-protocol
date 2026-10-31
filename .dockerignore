@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+node_modules
+data
+.git
+.DS_Store
+passport.json
+*.last.json
+Dockerfile
+docker-compose.yml
+web/node_modules
+web/.next
+web/out
+web/*.tsbuildinfo
+web/next-env.d.ts

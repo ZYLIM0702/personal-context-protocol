@@ -1,0 +1,86 @@
+\documentclass[border=0pt]{standalone}
+\input{pcp-style}
+
+\newcommand{\pcnode}[6]{
+  \node[rounded corners=9pt, minimum width=2.55cm, minimum height=0.95cm, align=center, inner sep=3pt,
+        fill=brand!#4!lavender, draw=brand!#4!brandlight, line width=0.8pt, text=#5] (#1) at (#2)
+    {{\fsBody\bfseries #3}\\[-1pt]{\fsTiny #6}};
+}
+
+\begin{document}
+\begin{tikzpicture}[figure]
+
+\node[anchor=west, text=brand] at (0,9.35) {\kicker{Personal Context graph}};
+\node[badge, anchor=west] at (4.15,9.35) {illustrative};
+\node[text=muted] at (6.0,8.75) {\kicker{Favorites}};
+\node[text=muted] at (11.0,8.75) {\kicker{Candidates}};
+
+\node[circle, fill=brand, text=white, minimum size=1.5cm, inner sep=0pt, align=center] (you) at (1.5,4.6)
+  {{\fontsize{10}{10}\selectfont\faUser}\\[2pt]{\fsTitle\bfseries You}};
+\node[font=\fsTiny, text=muted, align=center] at (1.5,5.68) {seed $\mathbf{e}_{\text{you}}$};
+
+\pcnode{radiohead}{6.0,7.6}{Radiohead}{53}{ink}{artist \textperiodcentered\ 0.53}
+\pcnode{arrival}{6.0,4.6}{Arrival}{100}{white}{movie \textperiodcentered\ 1.00}
+\pcnode{spirited}{6.0,1.6}{Spirited Away}{66}{white}{movie \textperiodcentered\ 0.66}
+\pcnode{her}{11.0,7.6}{Her}{23}{ink}{movie \textperiodcentered\ 0.23}
+\pcnode{exm}{11.0,4.6}{Ex Machina}{21}{ink}{movie \textperiodcentered\ 0.21}
+\pcnode{moon}{11.0,1.6}{Moon}{18}{ink}{movie \textperiodcentered\ 0.18}
+
+\node[rounded corners=9pt, minimum width=2.55cm, minimum height=0.95cm, align=center, inner sep=3pt,
+      fill=llmtint, draw=llm, dash pattern=on 3pt off 2pt, line width=0.8pt, text=llmdark] (tf) at (1.5,0.75)
+  {{\fsBody\bfseries Transformers}\\[-1pt]{\fsTiny movie \textperiodcentered\ $-1$ (vetoed)}};
+
+\begin{pgfonlayer}{edges}
+  \foreach \s in {radiohead, arrival, spirited} {
+    \draw[qloo, line width=1.25pt, opacity=0.85] (\s.east) -- (her.west);
+    \draw[qloo, line width=1.1pt, opacity=0.85] (\s.east) -- (exm.west);
+    \draw[qloo, line width=0.95pt, opacity=0.85] (\s.east) -- (moon.west);
+  }
+  \draw[brand, line width=1.6pt] (you) -- (radiohead.west);
+  \draw[brand, line width=2.6pt] (you) -- (arrival.west);
+  \draw[brand, line width=1.6pt] (you) -- (spirited.west);
+  \draw[brandlight, line width=1.4pt, dash pattern=on 1.2pt off 2.4pt] (arrival.south) -- (spirited.north);
+  \draw[llm, line width=1.1pt, dash pattern=on 4pt off 3pt] (you) -- (tf);
+\end{pgfonlayer}
+
+\node[lbl, fill=white, text=brand, font=\fsTiny\bfseries] at (3.75,6.1) {love};
+\node[lbl, fill=white, text=brand, font=\fsTiny\bfseries] at (3.6,4.6) {love + like};
+\node[lbl, fill=white, text=brand, font=\fsTiny\bfseries] at (3.75,3.1) {love};
+\node[lbl, fill=white, text=brand, anchor=west] at (6.08,3.1) {co-liked \textperiodcentered\ 0.5};
+\node[lbl, fill=white, text=llmdark, font=\fsTiny\bfseries] at (1.5,2.3) {\faBan\ veto};
+
+\node[lbl, fill=white, text=qloodark, font=\fsTiny\bfseries] at (9.3,7.6) {0.31};
+\node[lbl, fill=white, text=qloodark, font=\fsTiny\bfseries] at (9.3,4.6) {0.28};
+\node[lbl, fill=white, text=qloodark, font=\fsTiny\bfseries] at (9.3,1.6) {0.24};
+\node[lbl, text=qloodark, font=\fsTiny\bfseries] at (8.5,8.25) {qloo edges};
+
+\draw[card] (13.2,0.15) rectangle (17.6,8.95);
+\node[anchor=north west, align=left, inner sep=0pt] at (13.45,8.7)
+  {{\fsTitle\bfseries Personalized PageRank}\\[6pt]
+   $\mathbf{r}=\alpha\,\mathbf{e}_{\text{you}}+(1-\alpha)\,\mathbf{r}P$\\[3pt]
+   {\fsSmall $\alpha=0.15$, 40 iterations}\\[5pt]
+   {\fsTiny\color{muted}$P$: row-normalised edge weights,}\\
+   {\fsTiny\color{muted}edges undirected, veto edges skipped}\\[3pt]
+   {\fsTiny\color{muted}graph score $=r_i\,/\max_j r_j$}\\
+   {\fsTiny\color{muted}vetoed items score $-1$}};
+
+\shade[left color=lavender, right color=brand, rounded corners=2pt] (13.45,5.05) rectangle (17.35,5.35);
+\node[anchor=north west, font=\fsTiny, text=muted, inner sep=0pt] at (13.45,4.95) {0};
+\node[anchor=north, font=\fsTiny, text=muted, inner sep=0pt] at (15.4,4.95) {graph score};
+\node[anchor=north east, font=\fsTiny, text=muted, inner sep=0pt] at (17.35,4.95) {1};
+
+\draw[hairline, line width=0.6pt] (13.45,4.2) -- (17.35,4.2);
+\node[anchor=west, text=muted] at (13.4,3.85) {\kicker{Edges}};
+\draw[brand, line width=1.8pt] (13.5,3.35) -- (14.3,3.35);
+\node[anchor=west, font=\fsTiny, inner sep=0pt] at (14.5,3.35) {love / like: favorite or \faThumbsUp};
+\draw[qloo, line width=1.2pt] (13.5,2.8) -- (14.3,2.8);
+\node[anchor=west, align=left, font=\fsTiny, inner sep=0pt] at (14.5,2.8) {qloo: affinity $/$ \#favorites\\{\color{muted}e.g.\ Her: $0.93/3=0.31$}};
+\draw[brandlight, line width=1.4pt, dash pattern=on 1.2pt off 2.4pt] (13.5,2.12) -- (14.3,2.12);
+\node[anchor=west, font=\fsTiny, inner sep=0pt] at (14.5,2.12) {co-liked: shown together};
+\draw[llm, line width=1.1pt, dash pattern=on 4pt off 3pt] (13.5,1.6) -- (14.3,1.6);
+\node[anchor=west, font=\fsTiny, inner sep=0pt] at (14.5,1.6) {veto: \faThumbsDown, excluded};
+\node[anchor=west, align=left, font=\fsTiny, text=muted, inner sep=0pt] at (13.45,0.85)
+  {Stored per PC in SQLite (PCP node).\\Scores from \code{lib/graph.mjs}.};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,40 @@
+{
+  "name": "personal-context-protocol",
+  "version": "0.1.0",
+  "description": "PCP: an open, agent-agnostic personal context protocol with an on-device learned model, powered by Qloo.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZYLIM0702/personal-context-protocol.git"
+  },
+  "keywords": [
+    "pcp",
+    "personal-context",
+    "mcp",
+    "claude-code",
+    "qloo",
+    "recommendations"
+  ],
+  "bin": {
+    "pcp": "bin/pcp.mjs"
+  },
+  "files": [
+    "bin/",
+    "public/",
+    "server.mjs",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "scripts": {
+    "start": "node server.mjs",
+    "mcp": "node bin/pcp.mjs mcp"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.1"
+  }
+}

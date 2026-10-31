@@ -1,0 +1,79 @@
+\documentclass[border=0pt]{standalone}
+\input{pcp-style}
+
+\tikzset{
+  feat/.style={circle, minimum size=0.56cm, inner sep=0pt, line width=0.9pt, font=\fsTiny},
+  fa/.style={feat, draw=llm, fill=llmtint, text=llmdark},
+  fq/.style={feat, draw=qloo, fill=qlootint, text=qloodark},
+  fg/.style={feat, draw=brandlight, fill=lavender, text=brand},
+  ea/.style={draw=llm, line width=0.9pt},
+  eq/.style={draw=qloo, line width=0.9pt},
+  eg/.style={draw=brandlight, line width=0.9pt},
+  logit/.style={circle, minimum size=0.8cm, inner sep=0pt, draw=ink!70, fill=white, line width=0.9pt, font=\fsSmall},
+  outn/.style={circle, minimum size=0.62cm, inner sep=0pt, draw=brand, fill=white, line width=0.9pt, font=\fsTiny, text=brand},
+}
+
+\begin{document}
+\begin{tikzpicture}[figure]
+
+\fill[lavender] (4.75,0.95) rectangle (6.85,9.05);
+\draw[brandlight!70, line width=0.6pt, dash pattern=on 2pt off 1.5pt] (4.75,0.95) rectangle (6.85,9.05);
+
+\node[anchor=west, text=muted] at (0,9.75) {\kicker{Candidate}\ \,$i$};
+\node[text=muted] at (3.85,9.75) {\kicker{Inputs}\ \,$\mathbf{x}_i$};
+\node[text=brand] at (5.8,9.75) {\kicker{Shared}\ \,$\mathbf{w}$};
+\node[text=muted] at (7.85,9.75) {\kicker{Logit}\ \,$s_i$};
+\node[text=muted] at (10.0,9.75) {\kicker{Softmax}};
+\node[anchor=west, text=muted] at (11.95,9.75) {\kicker{Distribution}\ \,$p_i$};
+
+\draw[card, draw=brand!70, line width=0.9pt] (8.95,0.95) rectangle (11.05,9.05);
+\node[align=center] at (10.0,5.0) {{\fsTitle\bfseries softmax}\\[8pt]$\displaystyle p_i=\frac{e^{s_i}}{\sum_j e^{s_j}}$\\[10pt]{\fsTiny\color{muted}one distribution}\\{\fsTiny\color{muted}over all candidates}};
+
+\foreach \i/\y/\name/\prior/\p/\pl in {1/8.1/Inception/0.40/0.006/0.01, 2/6.1/Her/0.25/0.705/0.71, 3/4.1/Ex Machina/0.20/0.235/0.24, 4/2.1/Moon/0.15/0.054/0.05} {
+  \draw[card] (0,\y-0.62) rectangle (2.55,\y+0.62);
+  \node[anchor=west, align=left, inner sep=0pt] at (0.25,\y) {{\fsTiny\color{muted}$i=\i$}\\[1pt]{\fsTitle\bfseries \name}};
+  \node[fa] (a\i) at (4.0,\y+0.62) {$x_{\i 1}$};
+  \node[fq] (q\i) at (4.0,\y) {$x_{\i 2}$};
+  \node[fg] (g\i) at (4.0,\y-0.62) {$x_{\i 3}$};
+  \draw[hairline, line width=0.8pt] (2.55,\y) -- (2.95,\y);
+  \draw[hairline, line width=0.8pt] (2.95,\y) -- (a\i.west) (2.95,\y) -- (q\i.west) (2.95,\y) -- (g\i.west);
+  \node[logit] (s\i) at (7.85,\y) {$s_{\i}$};
+  \draw[ea] (a\i) -- (s\i);
+  \draw[eq] (q\i) -- (s\i);
+  \draw[eg] (g\i) -- (s\i);
+  \draw[arrow] (s\i) -- (8.95,\y);
+  \node[outn] (p\i) at (12.2,\y) {$p_{\i}$};
+  \draw[arrow, draw=brand] (11.05,\y) -- (p\i);
+  \fill[brand, rounded corners=1.5pt] (12.75,\y+0.05) rectangle ++(3.6*\p+0.06,0.3);
+  \node[anchor=west, font=\fsSmall\bfseries, text=brand, inner sep=0pt] at (12.75+3.6*\p+0.2,\y+0.2) {\pl};
+  \fill[llm, rounded corners=1pt] (12.75,\y-0.28) rectangle ++(3.6*\prior,0.13);
+  \node[anchor=west, font=\fsTiny, text=llmdark, inner sep=0pt] at (12.75+3.6*\prior+0.2,\y-0.215) {\prior};
+}
+
+\node[font=\fsSmall, text=llmdark, fill=lavender, inner sep=1.2pt] at (5.35,8.503) {$w_1$};
+\node[font=\fsSmall, text=qloodark, fill=lavender, inner sep=1.2pt] at (5.75,8.1) {$w_2$};
+\node[font=\fsSmall, text=brand, fill=lavender, inner sep=1.2pt] at (5.35,7.697) {$w_3$};
+\node[font=\fsSmall, text=ink] at (7.85,8.85) {$s_i=\mathbf{w}^{\top}\mathbf{x}_i$};
+
+\node[anchor=west, align=left, font=\fsTiny, text=muted] at (11.95,9.25) {{\color{brand}\rule{8pt}{4pt}}\ re-weighted $p_i$ \quad {\color{llm}\rule{8pt}{2pt}}\ agent's own $P_{\text{agent}}(i)$};
+
+\node[align=center, text=brand] (like) at (16.95,6.1) {\fontsize{12}{12}\selectfont\faThumbsUp\ \faThumbsDown[regular]};
+\node[font=\fsTiny, text=muted, align=center] at (16.95,5.45) {like / dislike\\on candidate $c$};
+
+\draw[arrow, draw=brand, rounded corners=8pt] (16.95,5.05) -- (16.95,-0.25) -- (5.8,-0.25) -- (5.8,0.95);
+\node[card, draw=brand!60, fill=white, inner sep=6pt, align=center] at (11.2,-0.25)
+  {$\mathbf{w}\;\leftarrow\;\mathbf{w}\,\pm\,\eta\,\big(\mathbf{x}_c-\mathbb{E}_{p}[\mathbf{x}]\big)$\\[3pt]
+   {\fsTiny\color{muted}$+$ like, $-$ dislike \textperiodcentered\ $\eta=0.5$ \textperiodcentered\ $\mathbf{w}_0=(1,1,1)$, clipped to $[-5,5]$ \textperiodcentered\ runs on device}\\[1pt]
+   {\fsTiny\color{brand}example: like Her $\Rightarrow$ $\mathbf{w}=(1.04,\,1.12,\,1.05)$}};
+
+\draw[card] (0,-1.05) rectangle (4.45,1.05);
+\fill[llmtint] (0.32,0.67) circle (0.11); \draw[llm, line width=0.8pt] (0.32,0.67) circle (0.11);
+\fill[qlootint] (0.32,0.27) circle (0.11); \draw[qloo, line width=0.8pt] (0.32,0.27) circle (0.11);
+\fill[lavender] (0.32,-0.13) circle (0.11); \draw[brandlight, line width=0.8pt] (0.32,-0.13) circle (0.11);
+\node[anchor=west, font=\fsSmall, inner sep=0pt] at (0.55,0.67) {$x_{i1}=\log P_{\text{agent}}(i)$};
+\node[anchor=west, font=\fsSmall, inner sep=0pt] at (0.55,0.27) {$x_{i2}=z(\text{Qloo affinity}_i)$};
+\node[anchor=west, font=\fsSmall, inner sep=0pt] at (0.55,-0.13) {$x_{i3}=z(\text{PC graph}_i)$};
+\node[anchor=north west, align=left, font=\fsTiny, text=muted, inner sep=0pt] at (0.22,-0.38) {$z$: z-score across the candidates\\vetoed candidates are dropped first};
+
+\end{tikzpicture}
+\end{document}

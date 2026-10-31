@@ -1,0 +1,1742 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>PCP · Personal Context Protocol</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f8f7fc; --card: #ffffff; --ink: #151a2d; --ink-2: #2f3348; --muted: #6b6b80;
+    --line: #e8e5f0; --line-strong: #d9d3ea;
+    --primary: #6a3df0; --primary-hover: #5a2fd8; --primary-deep: #2c1673;
+    --tint: #f4f0ff; --tint-2: #e6dcff; --tint-ink: #5a2fd8;
+    --agent-bar: #cdc6de;
+    --amber-bg: #fff8eb; --amber-line: #f3e0b5; --amber-ink: #7a4f00;
+    --red-bg: #fdf3f2; --red-line: #f4d2cd; --red-ink: #a3261b;
+    --green: #1a9e60; --green-bg: #eaf7f0; --green-line: #c6ead6; --green-ink: #137a4a; --warn-dot: #d38b00;
+    --shadow-sm: 0 1px 2px rgba(26, 16, 64, .04), 0 1px 3px rgba(26, 16, 64, .05);
+    --shadow: 0 2px 6px rgba(26, 16, 64, .04), 0 14px 36px rgba(26, 16, 64, .08);
+    --radius: 18px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 15.5px/1.55 var(--font); display: flex; overflow: hidden; -webkit-font-smoothing: antialiased; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: default; }
+  a { color: var(--primary); }
+  ::selection { background: var(--tint-2); }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  svg { flex: none; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .sidebar { width: 280px; flex: none; height: 100%; display: flex; flex-direction: column; overflow-y: auto; background: var(--card); border-right: 1px solid var(--line); }
+  .side-top { display: grid; gap: 14px; padding: 16px 14px 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 2px 6px; text-decoration: none; }
+  .mark { display: block; width: 32px; height: 32px; flex: none; }
+  .lockup { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+  .lockup b { font-size: 18px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); }
+  .lockup small { margin-top: 2px; font-size: 11.5px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+  .new-chat { width: 100%; }
+  .new-chat svg { width: 16px; height: 16px; }
+  .side-list { flex: 1 1 auto; min-height: 140px; overflow-y: auto; padding: 4px 10px 10px; }
+  .caption { margin: 6px 8px; font-size: 11.5px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
+  .side-empty { margin: 4px 8px; font-size: 13px; color: var(--muted); }
+  .conv { position: relative; display: flex; align-items: center; border-radius: 12px; }
+  .conv:hover { background: var(--page); }
+  .conv.active { background: var(--tint); }
+  .conv-open { flex: 1; min-width: 0; display: grid; gap: 1px; padding: 9px 38px 9px 10px; border: 0; border-radius: 12px; background: none; text-align: left; }
+  .conv-title { font-size: 14px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv.active .conv-title { color: var(--primary-deep); font-weight: 600; }
+  .conv-time { font-size: 11.5px; color: var(--muted); }
+  .conv-del { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); display: grid; place-items: center; opacity: 0; transition: opacity .15s; }
+  .conv-del svg { width: 16px; height: 16px; }
+  .conv:hover .conv-del, .conv-del:focus-visible { opacity: 1; }
+  .conv-del:hover { color: var(--red-ink); background: var(--red-bg); }
+  .side-bottom { flex: none; display: grid; gap: 2px; padding: 10px; border-top: 1px solid var(--line); }
+  .side-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 10px; background: none; font-size: 14.5px; font-weight: 500; color: var(--ink-2); text-align: left; text-decoration: none; }
+  .side-item:hover { background: var(--tint); color: var(--primary-deep); }
+  .side-item svg { width: 18px; height: 18px; color: var(--muted); }
+  .side-item .ext { width: 14px; height: 14px; margin-left: auto; }
+  .side-scrim { display: none; }
+
+  .qcard { position: relative; }
+  .qcard.side { margin: 0 0 8px; padding: 12px; border: 1px solid var(--tint-2); border-radius: 16px; background: linear-gradient(180deg, #faf8ff 0%, #ffffff 100%); }
+  .qcard.settings { margin-top: 2px; padding: 16px; border: 1px solid var(--tint-2); border-radius: 16px; background: linear-gradient(180deg, #fbf9ff 0%, #ffffff 100%); }
+  .qcard.on { padding: 0; border: 0; background: transparent; }
+  .qcard.side.on { margin-bottom: 6px; }
+  .qcard.pulse { animation: pulse 1.1s ease 2; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(106, 61, 240, .5); } 70% { box-shadow: 0 0 0 12px rgba(106, 61, 240, 0); } 100% { box-shadow: 0 0 0 0 rgba(106, 61, 240, 0); } }
+  .qhead { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .qtile { width: 32px; height: 32px; flex: none; border-radius: 10px; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, #9a7dff 0%, #6a3df0 55%, #4f27c9 100%); box-shadow: 0 4px 12px rgba(106, 61, 240, .28); }
+  .qtile svg { width: 17px; height: 17px; }
+  .settings .qtile { width: 40px; height: 40px; border-radius: 12px; }
+  .settings .qtile svg { width: 20px; height: 20px; }
+  .qcard h4 { margin: 0; font-size: 14px; font-weight: 650; line-height: 1.25; color: var(--ink); }
+  .settings h4 { font-size: 15.5px; }
+  .judges-pill { display: inline-block; margin-right: 5px; padding: 0 8px; border-radius: 999px; background: #fbe4a9; color: #5f3c00; font-size: 10.5px; font-weight: 700; line-height: 18px; vertical-align: 1px; white-space: nowrap; }
+  .judges-line { margin: 0 0 4px; font-size: 12px; line-height: 1.45; color: var(--ink-2); }
+  .judges { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--amber-line); border-radius: 12px; background: var(--amber-bg); font-size: 13px; line-height: 1.5; color: #4d3300; }
+  .why { margin: 0 0 10px; font-size: 12px; }
+  .why summary { display: inline-block; cursor: pointer; font-weight: 600; color: var(--primary); list-style: none; }
+  .why summary::-webkit-details-marker { display: none; }
+  .why p { margin: 6px 0 0; padding: 8px 10px; border-radius: 10px; background: var(--amber-bg); line-height: 1.45; color: #4d3300; }
+  .keygroup { min-width: 0; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 4px 0 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); transition: border-color .15s, box-shadow .15s; }
+  .keygroup:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(106, 61, 240, .16); }
+  .keygroup > svg { width: 16px; height: 16px; color: var(--muted); }
+  .keygroup input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; font-size: 14px; color: var(--ink); }
+  .keygroup input:focus { outline: none; box-shadow: none; }
+  .eye { width: 32px; height: 32px; flex: none; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); display: grid; place-items: center; }
+  .eye:hover { background: var(--tint); color: var(--primary); }
+  .eye svg { width: 16px; height: 16px; }
+  .fine { margin: 6px 4px 10px; font-size: 11px; line-height: 1.4; color: var(--muted); }
+  .settings .fine { font-size: 12px; }
+  .qconnect { width: 100%; height: 40px; }
+  .trust-row { display: flex; gap: 4px; margin-top: 10px; }
+  .trust { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--page); font-size: 10.5px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+  .settings .trust { font-size: 11.5px; padding: 3px 9px; }
+  .qdocs { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; text-decoration: none; }
+  .qdocs:hover { text-decoration: underline; }
+  .qstatus { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--page); font-size: 12.5px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+  .qstatus [data-qtext] { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .qstatus.ok { border-color: var(--green-line); background: var(--green-bg); color: var(--green-ink); font-weight: 600; }
+  .qforget { margin-left: -4px; padding: 2px 0; border: 0; background: none; font-size: 12.5px; font-weight: 600; color: var(--primary); }
+  .qforget::before { content: "· "; color: var(--green-ink); }
+  .qforget:hover { text-decoration: underline; }
+
+  .main { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; }
+  .topbar { flex: none; display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 16px 0 22px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .menu { display: none; width: 38px; height: 38px; margin-left: -8px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--ink-2); place-items: center; }
+  .menu:hover { background: var(--tint); }
+  .menu svg { width: 22px; height: 22px; }
+  .chat-title { flex: 1; min-width: 0; margin: 0; font-size: 15.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip-status { display: inline-flex; align-items: center; gap: 8px; flex: none; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 13px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+  .chip-status:hover { border-color: var(--line-strong); }
+  .chip-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+  .chip-status b { font-weight: 600; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 18px; border: 1px solid transparent; border-radius: 999px; font-size: 14px; font-weight: 600; line-height: 1.2; white-space: nowrap; transition: background .15s, border-color .15s, color .15s, box-shadow .15s; }
+  .btn.primary { background: var(--primary); color: #fff; }
+  .btn.primary:hover { background: var(--primary-hover); }
+  .btn.secondary { border-color: var(--line-strong); background: var(--card); color: var(--primary-deep); }
+  .btn.secondary:hover { border-color: var(--primary); color: var(--primary); }
+  .btn.tint { border-color: var(--tint-2); background: var(--tint); color: var(--primary-deep); }
+  .btn.tint:hover { background: var(--tint-2); }
+  .btn.sm { padding: 7px 14px; font-size: 13px; }
+  .btn.big { padding: 14px 20px; font-size: 15.5px; }
+  .btn:disabled { opacity: .5; }
+  .linkish { padding: 4px 2px; border: 0; background: none; font-size: 13px; font-weight: 600; color: var(--primary); }
+  .linkish:hover { text-decoration: underline; }
+  .x { width: 34px; height: 34px; flex: none; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); display: grid; place-items: center; font-size: 20px; line-height: 1; }
+  .x:hover { background: var(--tint); color: var(--ink); }
+  label.field { display: grid; gap: 6px; margin-bottom: 12px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); }
+  label.field input, label.field select, .row input, .row select {
+    width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 12px; background-color: var(--card); font-size: 14.5px; font-weight: 400; color: var(--ink); transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(106, 61, 240, .16); }
+  select { appearance: none; -webkit-appearance: none; cursor: pointer; background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236b6b80' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .row input { flex: 1 1 150px; width: auto; }
+  .row select { flex: 0 1 130px; width: auto; }
+  .toggle { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; font-size: 14.5px; }
+  .toggle small { display: block; font-size: 12px; color: var(--muted); }
+  .switch { appearance: none; -webkit-appearance: none; position: relative; width: 40px; height: 24px; margin: 0; flex: none; border-radius: 999px; background: var(--line-strong); cursor: pointer; transition: background .15s; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .22); transition: transform .15s; }
+  .switch:checked { background: var(--primary); }
+  .switch:checked::after { transform: translateX(16px); }
+  .switch:disabled { opacity: .55; cursor: default; }
+
+  .stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .thread { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 28px 16px 12px; }
+  .inner { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .stage.empty { justify-content: center; overflow-y: auto; padding: 24px 0 56px; }
+  .stage.empty .thread { flex: none; overflow: visible; padding: 0 16px 22px; }
+  .stage.empty .composer { padding-bottom: 0; }
+  .stage.empty .composer form { padding: 10px 10px 10px 16px; border-radius: 26px; box-shadow: 0 2px 6px rgba(26, 16, 64, .04), 0 18px 48px rgba(26, 16, 64, .1); }
+  .stage.empty .composer input { padding: 12px 6px; font-size: 16.5px; }
+  .stage.empty .hint { display: none; }
+  .hero { display: grid; justify-items: center; text-align: center; }
+  .hero-mark { width: 48px; height: 48px; margin-bottom: 16px; }
+  .hero h2 { margin: 0; font-size: 31px; font-weight: 750; letter-spacing: -.025em; line-height: 1.2; color: var(--ink); }
+  .hero p { margin: 10px 0 0; font-size: 15.5px; color: var(--muted); }
+  .setup-link { margin-top: 12px; padding: 4px 6px; border: 0; background: none; font-size: 14.5px; font-weight: 600; color: var(--primary); }
+  .setup-link:hover { text-decoration: underline; }
+  .hero-cards { display: none; }
+  .stage.empty .hero-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: calc(100% - 32px); max-width: 800px; margin: 14px auto 0; }
+  .hcard { display: grid; gap: 2px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); text-align: left; box-shadow: var(--shadow-sm); transition: border-color .15s, background .15s; }
+  .hcard:hover { border-color: var(--tint-2); background: var(--tint); }
+  .hcard b { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+  .hcard span { font-size: 13px; color: var(--muted); }
+  .hero-cards.locked .hcard { opacity: .55; cursor: not-allowed; }
+  .hero-cards.locked .hcard:hover { border-color: var(--line); background: var(--card); }
+
+  .msg { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
+  .msg.user { justify-content: flex-end; }
+  .avatar { width: 34px; height: 34px; margin-top: 4px; flex: none; border: 1px solid var(--line); border-radius: 50%; background: var(--card); display: grid; place-items: center; box-shadow: var(--shadow-sm); overflow: hidden; }
+  .avatar img { width: 22px; height: 22px; }
+  .card { flex: 1; min-width: 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow-sm); }
+  .card.slim { flex: 0 1 auto; padding: 12px 18px; font-size: 14.5px; color: var(--muted); }
+  .bubble { max-width: min(80%, 560px); padding: 10px 16px; border-radius: 18px 18px 6px 18px; background: var(--primary); color: #fff; box-shadow: var(--shadow-sm); overflow-wrap: anywhere; }
+  .bubble small { display: block; margin-top: 2px; font-size: 12px; opacity: .8; }
+  .answer-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px; }
+  .infer { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--tint); font-size: 12.5px; font-weight: 600; color: var(--primary-deep); }
+  .change { padding: 2px 4px; border: 0; background: none; font-size: 12.5px; font-weight: 600; color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+  .type-pop { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+  .type-pop button { padding: 5px 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); font-size: 13px; font-weight: 500; color: var(--ink-2); }
+  .type-pop button:hover { border-color: var(--primary); color: var(--primary); }
+  .type-pop button[aria-current="true"] { border-color: var(--primary); background: var(--tint); color: var(--primary-deep); }
+  .lead { margin: 0; }
+  .notice { display: flex; align-items: flex-start; gap: 10px; margin: 14px 0 0; padding: 10px 14px; border: 1px solid; border-radius: 12px; font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
+  .notice::before { content: ""; flex: none; width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: currentColor; }
+  .notice.amber { border-color: var(--amber-line); background: var(--amber-bg); color: var(--amber-ink); }
+  .notice.ok { border-color: var(--tint-2); background: var(--tint); color: var(--tint-ink); }
+  .notice.err { margin: 0; border-color: var(--red-line); background: var(--red-bg); color: var(--red-ink); }
+  .subtle { margin: 10px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+  .typing { display: inline-flex; gap: 4px; margin-right: 8px; vertical-align: middle; }
+  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); opacity: .3; animation: blink 1.2s infinite; }
+  .typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 40% { opacity: 1; } }
+
+  .picks { display: flex; flex-direction: column; margin: 14px -10px 0; }
+  .pick { display: grid; grid-template-columns: 32px minmax(0, 1fr) minmax(170px, 220px) auto; align-items: center; gap: 14px; padding: 12px 10px; border-top: 1px solid var(--line); }
+  .pick:first-child, .pick.top + .pick { border-top-color: transparent; }
+  .pick.top { border-radius: 14px; border-top-color: transparent; background: var(--tint); }
+  .rank { width: 32px; height: 32px; border-radius: 50%; background: var(--page); color: var(--muted); display: grid; place-items: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pick.top .rank { background: var(--primary); color: #fff; }
+  .pname { min-width: 0; }
+  .pname b { display: block; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pname small { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 12.5px; color: var(--muted); }
+  .gscore { display: inline-flex; align-items: center; gap: 5px; }
+  .gscore i { position: relative; display: inline-block; width: 34px; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .pick.top .gscore i { background: #fff; }
+  .gscore i b { position: absolute; inset: 0 auto 0 0; display: block; border-radius: 999px; background: #a98bff; }
+  .badge { display: inline-block; margin-left: 8px; padding: 0 8px; border: 1px solid var(--tint-2); border-radius: 999px; background: var(--card); font-size: 11px; font-weight: 600; line-height: 18px; color: var(--primary); vertical-align: 2px; }
+  .bars { display: grid; gap: 5px; font-size: 12px; color: var(--muted); }
+  .bar { display: grid; grid-template-columns: 42px 1fr 38px; align-items: center; gap: 8px; }
+  .bar span:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink-2); }
+  .track { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .pick.top .track { background: #fff; }
+  .track i { display: block; height: 100%; border-radius: 999px; }
+  .agent i { background: var(--agent-bar); } .you i { background: var(--primary); }
+  .fb { display: flex; gap: 6px; }
+  .round { width: 34px; height: 34px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 15px; transition: background .15s, border-color .15s; }
+  .round:hover { border-color: var(--primary); background: var(--tint); }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+  .agent-tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--page); font-weight: 500; color: var(--ink-2); overflow-wrap: anywhere; }
+  .prov { margin: 12px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--page); font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+  .composer { flex: none; padding: 10px 16px 18px; }
+  .composer form { max-width: 800px; margin: 0 auto; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); box-shadow: var(--shadow); transition: box-shadow .15s, border-color .15s, background .15s; }
+  .composer form:focus-within { border-color: var(--tint-2); box-shadow: var(--shadow), 0 0 0 4px rgba(106, 61, 240, .09); }
+  .composer form.locked { background: #f3f2f8; box-shadow: none; }
+  .composer input { flex: 1; min-width: 0; padding: 10px 6px; border: 0; background: transparent; font-size: 15.5px; color: var(--ink); }
+  .composer input:focus, .composer input:focus-visible { outline: none; box-shadow: none; }
+  .composer input::placeholder { color: #9a98ab; }
+  .composer input:disabled { cursor: not-allowed; }
+  .send { padding: 10px 22px; }
+  .hint { margin-top: 10px; text-align: center; font-size: 12px; color: var(--muted); }
+  .gate-hint { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px auto 0; padding: 4px 8px; border: 0; background: none; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+  .gate-hint:hover { color: var(--primary); }
+  .gate-hint svg { width: 15px; height: 15px; }
+
+  .scrim { position: fixed; inset: 0; z-index: 50; background: rgba(21, 26, 45, .28); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .drawer { position: fixed; z-index: 60; top: 0; right: 0; bottom: 0; width: min(440px, 100%); display: flex; flex-direction: column; background: var(--page); border-radius: 20px 0 0 20px; box-shadow: -12px 0 40px rgba(26, 16, 64, .14); overflow: hidden; transform: translateX(100%); visibility: hidden; transition: transform .22s ease, visibility 0s linear .22s; }
+  body.settings .scrim { opacity: 1; pointer-events: auto; }
+  body.settings .drawer { transform: none; visibility: visible; transition: transform .22s ease, visibility 0s; }
+  .drawer-head { flex: none; display: flex; align-items: center; gap: 12px; padding: 16px 16px 16px 22px; border-bottom: 1px solid var(--line); background: var(--card); }
+  .drawer-head h2 { margin: 0; font-size: 19px; font-weight: 650; letter-spacing: -.01em; }
+  .drawer-head .x { margin-left: auto; }
+  .drawer-body { display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow-y: auto; }
+  .group { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); box-shadow: var(--shadow-sm); scroll-margin-top: 16px; }
+  .group h3 { margin: 0 0 4px; font-size: 15.5px; font-weight: 650; color: var(--ink); }
+  .group .desc { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+  .chips:empty { display: none; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--tint); font-size: 13px; font-weight: 500; color: var(--primary-deep); }
+  .chip small { font-weight: 400; color: var(--muted); }
+  .chip button { width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); display: grid; place-items: center; }
+  .chip button:hover { background: var(--card); color: var(--primary); }
+  .chip.veto { padding-right: 12px; border: 1px solid var(--line); background: var(--page); color: var(--muted); text-decoration: line-through; }
+  .chip.plain { padding-right: 12px; }
+  .actions { margin-top: 16px; }
+  .manual { margin-top: 12px; }
+  .graph-box { margin-top: 16px; padding: 12px 12px 10px; border: 1px solid var(--line); border-radius: 14px; background: radial-gradient(circle at 50% 46%, #f7f3ff 0%, #ffffff 68%); }
+  .graph-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13.5px; }
+  .graph-head b { font-weight: 650; color: var(--ink); }
+  .graph-box svg { display: block; width: 100%; height: auto; margin-top: 4px; }
+  .graph-box .g-empty { font-size: 12px; fill: var(--muted); }
+  .graph-box .g-label { font-size: 9.5px; font-weight: 500; fill: var(--ink-2); paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
+  .graph-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--muted); }
+  .graph-legend i { display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; vertical-align: 0; }
+  .graph-box .caption { margin: 6px 0 0; font-weight: 500; }
+  .weights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .weight { padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--page); }
+  .weight b { display: block; font-size: 21px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .weight span { font-size: 12px; color: var(--muted); }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--warn-dot); }
+  .dot.on { background: var(--green); }
+  .dot.idle { background: var(--line-strong); }
+  .status.sub { margin: -4px 0 12px; font-size: 12.5px; color: var(--muted); }
+  .tiny { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+  .group p.tiny { margin: 10px 0 0; }
+  .store { margin: 4px 0 0; }
+  .store .tiny { margin: 0 0 12px !important; }
+  .result { margin-top: 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 12.5px; line-height: 1.45; color: var(--muted); overflow-wrap: anywhere; }
+  .result:empty { display: none; }
+  .result.ok { border-color: var(--tint-2); background: var(--tint); color: var(--tint-ink); }
+  .result.err { border-color: var(--red-line); background: var(--red-bg); color: var(--red-ink); }
+
+  .overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(21, 26, 45, .42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .overlay.top { z-index: 90; }
+  .ob-card { position: relative; width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow-x: hidden; overflow-y: auto; padding: 30px 32px 28px; border-radius: 24px; background: var(--card); box-shadow: 0 24px 80px rgba(21, 26, 45, .25); }
+  .ob-close { position: absolute; top: 14px; right: 14px; }
+  .steps { display: flex; gap: 6px; margin-bottom: 14px; }
+  .steps i { width: 26px; height: 5px; border-radius: 999px; background: var(--line); }
+  .steps i.on { background: var(--primary); }
+  .ob-card h2 { margin: 0 0 6px; font-size: 26px; font-weight: 750; letter-spacing: -.02em; line-height: 1.2; }
+  .ob-sub { margin: 0 0 20px; font-size: 15px; color: var(--muted); }
+  .cat-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cat { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1.5px solid var(--line-strong); border-radius: 999px; background: var(--card); font-size: 15px; font-weight: 600; color: var(--ink-2); transition: border-color .15s, background .15s; }
+  .cat:hover { border-color: var(--primary); }
+  .cat[aria-pressed="true"] { border-color: var(--primary); background: var(--tint); color: var(--primary-deep); }
+  .cat[aria-pressed="true"]::after { content: "✓"; font-size: 13px; color: var(--primary); }
+  .ob-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 26px; }
+  .btn.google { border-color: var(--line-strong); background: var(--card); color: var(--ink); }
+  .btn.google:hover { border-color: var(--ink-2); background: var(--page); }
+  .btn.google svg { width: 18px; height: 18px; }
+  .ob-note { margin: 14px 0 0; text-align: center; font-size: 12.5px; color: var(--muted); }
+  .deck { position: relative; height: 330px; max-width: 380px; margin: 0 auto; }
+  .swipe-card { position: absolute; inset: 0 0 28px; display: flex; flex-direction: column; padding: 20px 22px 24px; border: 1px solid var(--tint-2); border-radius: 24px; background: linear-gradient(160deg, #ffffff 0%, #f6f2ff 40%, #e9dfff 100%); box-shadow: 0 12px 32px rgba(60, 30, 140, .13); user-select: none; -webkit-user-select: none; touch-action: none; transition: transform .25s ease, opacity .25s ease; }
+  .swipe-card[data-depth="0"] { z-index: 3; cursor: grab; }
+  .swipe-card[data-depth="0"]:active { cursor: grabbing; }
+  .swipe-card[data-depth="1"] { z-index: 2; transform: translateY(12px) scale(.955) rotate(-2.4deg); }
+  .swipe-card[data-depth="2"] { z-index: 1; transform: translateY(24px) scale(.91) rotate(2.6deg); opacity: .85; }
+  .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+  .cat-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border: 1px solid var(--tint-2); border-radius: 999px; background: rgba(255, 255, 255, .85); font-size: 12.5px; font-weight: 600; color: var(--primary-deep); }
+  .g-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 11.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+  .g-badge svg { width: 13px; height: 13px; }
+  .card-emoji { width: 84px; height: 84px; margin: auto 0 16px; border: 1px solid var(--tint-2); border-radius: 24px; background: rgba(255, 255, 255, .8); display: grid; place-items: center; font-size: 44px; }
+  .swipe-card h3 { margin: 0; font-size: 32px; font-weight: 800; line-height: 1.1; letter-spacing: -.025em; color: var(--ink); overflow-wrap: anywhere; }
+  .swipe-card p { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
+  .stamp { position: absolute; top: 56px; padding: 4px 12px; border: 3px solid; border-radius: 10px; background: rgba(255, 255, 255, .85); font-size: 26px; font-weight: 900; letter-spacing: .08em; opacity: 0; pointer-events: none; }
+  .stamp.love { left: 22px; border-color: #16a34a; color: #16a34a; transform: rotate(-14deg); }
+  .stamp.skip { right: 22px; border-color: #8b8a9a; color: #8b8a9a; transform: rotate(14deg); }
+  .deck-empty { position: absolute; inset: 0 0 28px; display: grid; place-content: center; gap: 6px; padding: 24px; border: 1.5px dashed var(--line-strong); border-radius: 24px; text-align: center; color: var(--muted); }
+  .deck-empty b { font-size: 17px; color: var(--ink); }
+  .deck-controls { display: flex; justify-content: center; align-items: center; gap: 18px; margin-top: 6px; }
+  .round-lg, .round-md { padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--card); display: grid; place-items: center; box-shadow: var(--shadow-sm); transition: transform .12s, background .15s, border-color .15s; }
+  .round-lg { width: 60px; height: 60px; }
+  .round-md { width: 44px; height: 44px; color: var(--muted); }
+  .round-lg svg { width: 26px; height: 26px; }
+  .round-md svg { width: 19px; height: 19px; }
+  .round-lg:active, .round-md:active { transform: scale(.94); }
+  .round-lg.skip { color: #7d7c8e; }
+  .round-lg.skip:hover { border-color: #8b8a9a; background: #f6f6f8; }
+  .round-lg.love { border-color: var(--primary); background: var(--primary); color: #fff; box-shadow: 0 8px 20px rgba(106, 61, 240, .3); }
+  .round-lg.love:hover { background: var(--primary-hover); }
+  .round-md:hover { border-color: var(--primary); color: var(--primary); }
+  .deck-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; margin-top: 18px; }
+  .deck-progress { font-size: 14px; font-weight: 500; color: var(--ink-2); }
+  .deck-progress i { display: block; width: 140px; height: 5px; margin-top: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .deck-progress i b { display: block; height: 100%; border-radius: 999px; background: var(--primary); transition: width .2s; }
+  .ready-mark { width: 56px; height: 56px; margin-bottom: 14px; border-radius: 50%; background: var(--green-bg); color: var(--green-ink); display: grid; place-items: center; font-size: 26px; font-weight: 700; }
+
+  .g-card { width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 22px 26px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 24px 80px rgba(21, 26, 45, .3); }
+  .demo-flag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--amber-line); border-radius: 999px; background: var(--amber-bg); font-size: 12px; font-weight: 600; color: var(--amber-ink); }
+  .g-head { display: flex; align-items: center; gap: 10px; margin: 16px 0; padding-bottom: 14px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink-2); }
+  .g-head svg { width: 20px; height: 20px; }
+  .g-card h2 { margin: 0 0 14px; font-size: 22px; font-weight: 500; line-height: 1.3; color: var(--ink); }
+  .g-account { display: flex; align-items: center; gap: 10px; width: max-content; max-width: 100%; margin-bottom: 16px; padding: 5px 14px 5px 5px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; }
+  .g-account small { display: block; font-size: 11.5px; color: var(--muted); }
+  .g-avatar { width: 30px; height: 30px; flex: none; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+  .g-scopes { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .g-scopes li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+  .g-scopes svg { width: 22px; height: 22px; color: var(--muted); }
+  .g-fine { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); }
+  .g-how { margin-top: 12px; font-size: 13px; }
+  .g-how summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+  .g-how p { margin: 8px 0 0; line-height: 1.5; color: var(--muted); }
+  .g-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .g-progress { height: 6px; margin: 18px 0 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .g-progress i { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--primary); transition: width 1.6s ease; }
+
+  @media (hover: none) { .conv-del { opacity: .65; } }
+  @media (max-width: 859px) {
+    .sidebar { position: fixed; z-index: 40; top: 0; bottom: 0; left: 0; width: min(310px, 88vw); box-shadow: 12px 0 40px rgba(26, 16, 64, .14); transform: translateX(-100%); visibility: hidden; transition: transform .22s ease, visibility 0s linear .22s; }
+    body.nav-open .sidebar { transform: none; visibility: visible; transition: transform .22s ease, visibility 0s; }
+    .side-scrim { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(21, 26, 45, .28); opacity: 0; pointer-events: none; transition: opacity .2s; }
+    body.nav-open .side-scrim { opacity: 1; pointer-events: auto; }
+    .menu { display: grid; }
+    .topbar { padding: 0 12px 0 16px; }
+  }
+  @media (max-width: 640px) {
+    body { font-size: 15px; }
+    .thread { padding: 16px 12px 8px; }
+    .inner { gap: 14px; }
+    .avatar { display: none; }
+    .card { padding: 16px; }
+    .bubble { max-width: 88%; }
+    .picks { margin: 12px -8px 0; }
+    .pick { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px 8px; }
+    .rank { width: 28px; height: 28px; font-size: 12px; }
+    .bars { grid-column: 2 / -1; grid-row: 2; }
+    .round { width: 32px; height: 32px; }
+    .composer { padding: 8px 12px 12px; }
+    .send { padding: 10px 16px; }
+    .stage.empty { padding: 16px 0 32px; }
+    .stage.empty .thread { padding: 0 12px 18px; }
+    .hero h2 { font-size: 25px; }
+    .hero p { font-size: 14.5px; }
+    .stage.empty .hero-cards { width: calc(100% - 24px); gap: 8px; }
+    .hcard { padding: 12px 13px; border-radius: 14px; }
+    .hcard b { font-size: 13.5px; }
+    .hcard span { font-size: 12px; }
+    .drawer { border-radius: 0; }
+    .drawer-body { padding: 12px; }
+    .group { padding: 16px; }
+    #addForm input { flex-basis: 100%; }
+    #addForm select { flex: 1 1 auto; }
+    .overlay { padding: 10px; }
+    .ob-card { max-height: calc(100dvh - 20px); padding: 22px 18px 20px; border-radius: 22px; }
+    .ob-card h2 { padding-right: 30px; font-size: 23px; }
+    .ob-actions { grid-template-columns: 1fr; }
+    .deck { height: 310px; }
+    .swipe-card h3 { font-size: 28px; }
+    .g-card { padding: 18px; }
+  }
+  @media (max-width: 480px) { .pc-upd { display: none; } }
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar" aria-label="Chats">
+  <div class="side-top">
+    <a class="brand" href="/" aria-label="PCP, Personal Context Protocol, home">
+      <img class="mark" src="/brand/mark.png" alt="" width="32" height="32" decoding="async">
+      <span class="lockup"><b>PCP</b><small>Personal Context Protocol</small></span>
+    </a>
+    <button class="btn tint new-chat" id="newChat" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+  </div>
+  <div class="side-list">
+    <p class="caption" id="historyCaption">Demo history · local SQLite</p>
+    <nav class="conv-list" id="convList" aria-label="Conversations"></nav>
+  </div>
+  <div class="side-bottom">
+    <div id="sideQloo"></div>
+    <button class="side-item" type="button" id="navPC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 17c.8-1.8 2-2.6 3.5-2.6s2.7.8 3.5 2.6"/><path d="M15 10h3M15 14h3"/></svg>Your PC</button>
+    <button class="side-item" type="button" id="navSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+    <a class="side-item" href="https://github.com/ZYLIM0702/personal-context-protocol#readme" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M8 7h7"/></svg>Docs<svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+  </div>
+</aside>
+<div class="side-scrim" id="sideScrim"></div>
+
+<div class="main">
+  <header class="topbar">
+    <button class="menu" type="button" id="openNav" aria-label="Open chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <h1 class="chat-title" id="chatTitle">New chat</h1>
+    <button class="chip-status" type="button" id="pcChip" aria-label="Open your PC"><i></i><span id="pcPill"></span></button>
+  </header>
+  <div class="stage" id="stage">
+    <main class="thread" id="thread"><div class="inner" id="inner"></div></main>
+    <div class="composer">
+      <form id="composer">
+        <input id="prompt" placeholder="Ask for anything, e.g. a movie for Friday night" autocomplete="off" required aria-label="Message">
+        <button class="btn primary send" id="send">Send</button>
+      </form>
+      <button class="gate-hint" type="button" id="gateHint" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg>Connect Qloo to start chatting</button>
+      <div class="hint" id="hint">Your PC and its model stay on this device. Only public entity names are shared.</div>
+    </div>
+    <div class="hero-cards" id="heroCards">
+      <button class="hcard" type="button" data-suggest="Something to watch on a Friday night"><b>Friday night movie</b><span>something to watch tonight</span></button>
+      <button class="hcard" type="button" data-suggest="New music for a long drive"><b>Music for a long drive</b><span>artists for the road</span></button>
+      <button class="hcard" type="button" data-suggest="A cozy book for a rainy weekend"><b>Rainy-weekend book</b><span>a cozy read</span></button>
+      <button class="hcard" type="button" data-suggest="A podcast for my 30-minute commute"><b>Podcast for my commute</b><span>30-minute listens</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" aria-label="Settings">
+  <div class="drawer-head">
+    <h2>Settings</h2>
+    <button class="x" type="button" id="closeSettings" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <section class="group" id="pcGroup">
+      <h3>Your PC (Personal Context)</h3>
+      <p class="desc">Things you love. Only their public names are ever shared with an agent.</p>
+      <div class="chips" id="signals"></div>
+      <div class="chips" id="vetoes"></div>
+      <div class="row actions">
+        <button class="btn primary sm" type="button" id="addMore">Add more</button>
+        <button class="linkish" type="button" id="manualToggle" aria-expanded="false" aria-controls="addForm">Can't find it? Add manually</button>
+      </div>
+      <form class="row manual" id="addForm" hidden>
+        <input id="favName" placeholder="Something you love" required>
+        <select id="favType" aria-label="Category"></select>
+        <button class="btn primary sm">Add</button>
+      </form>
+      <div class="graph-box">
+        <div class="graph-head"><b>Your PC graph</b><span class="tiny" id="graphStats"></span></div>
+        <svg id="pcGraph" viewBox="0 0 360 240" role="img" aria-label="Your PC graph"></svg>
+        <div class="graph-legend"><span><i style="background:#6a3df0"></i>You</span><span><i style="background:#8b66ff"></i>Loved</span><span><i style="background:#d6c8ff"></i>Qloo-linked</span><span><i style="background:#c4c2cf"></i>Vetoed</span></div>
+        <p class="caption" id="graphCaption">Trained locally with Personalized PageRank. No LLM tokens.</p>
+      </div>
+      <div class="row actions">
+        <button class="btn secondary sm" id="exportBtn" type="button">Export (encrypted)</button>
+        <button class="btn secondary sm" id="importBtn" type="button">Import</button>
+        <button class="btn secondary sm" id="resetBtn" type="button">Reset</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+      <div class="result" id="pcMsg" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="group">
+      <h3>On-device model</h3>
+      <p class="desc">Learns how much to trust each signal, right in this browser.</p>
+      <div class="weights">
+        <div class="weight"><b id="w0">1.00</b><span>Agent</span></div>
+        <div class="weight"><b id="w1">1.00</b><span>Qloo taste</span></div>
+        <div class="weight"><b id="w2">1.00</b><span>PC graph</span></div>
+      </div>
+      <p class="tiny" id="updates"></p>
+      <label class="toggle">Learn from 👍 / 👎 <input class="switch" type="checkbox" data-setting="learn"></label>
+      <label class="field">Learning rate
+        <select data-setting="lr"><option value="0.25">Gentle (0.25)</option><option value="0.5">Default (0.5)</option><option value="1">Fast (1.0)</option></select>
+      </label>
+    </section>
+
+    <section class="group">
+      <h3>Agent model</h3>
+      <p class="desc">Which model proposes options before your PC re-ranks them.</p>
+      <label class="toggle"><span>Graph-only mode (no LLM tokens)<small>Qloo + your PC graph only</small></span><input class="switch" type="checkbox" data-setting="graphOnly"></label>
+      <label class="field" style="margin-top:6px">Provider
+        <select data-setting="provider">
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="openai">OpenAI-compatible API</option>
+          <option value="ollama">Local model (Ollama / LM Studio)</option>
+        </select>
+      </label>
+      <div class="status sub" id="providerStatus"><span class="dot idle"></span><span>Checking server…</span></div>
+      <label class="field">Model <input id="modelInput" data-setting="model" placeholder="claude-sonnet-5-5" spellcheck="false" autocomplete="off"></label>
+      <label class="field" id="baseUrlField" hidden>Base URL <input id="baseUrlInput" data-setting="baseUrl" placeholder="http://localhost:11434/v1" spellcheck="false" autocomplete="off" inputmode="url"></label>
+      <p class="tiny">Leave Model empty to use the default. API keys live on the server in <code>.env</code>, never in the browser.</p>
+    </section>
+
+    <section class="group" id="qlooGroup">
+      <h3>Taste intelligence</h3>
+      <div id="settingsQloo"></div>
+      <label class="toggle" style="margin-top:8px">Re-weight answers with Qloo <input class="switch" type="checkbox" data-setting="useQloo"></label>
+      <label class="toggle">Show Qloo provenance <input class="switch" type="checkbox" data-setting="provenance"></label>
+    </section>
+
+    <section class="group">
+      <h3>Privacy &amp; storage</h3>
+      <label class="toggle">Share only public entity names <input class="switch" type="checkbox" checked disabled></label>
+      <label class="field" style="margin-top:6px">Keep encrypted backups in
+        <select data-setting="storage">
+          <option value="device">This device only</option>
+          <option value="self">My own server</option>
+          <option value="drive">Google Drive</option>
+        </select>
+      </label>
+      <div class="store" data-store="device">
+        <p class="tiny">Your PC stays in this browser only. Use Export to carry an encrypted copy to another device.</p>
+      </div>
+      <div class="store" data-store="self" hidden>
+        <label class="field">Vault server <input data-setting="vaultUrl" placeholder="This server (same origin)" spellcheck="false" autocomplete="off" inputmode="url"></label>
+        <label class="field">Backup ID <input id="vaultId" spellcheck="false" autocomplete="off"></label>
+        <p class="tiny">To restore on another device, paste this ID there. The server only ever stores ciphertext.</p>
+        <div class="row">
+          <button class="btn primary sm" type="button" id="selfBackup">Back up now</button>
+          <button class="btn secondary sm" type="button" id="selfRestore">Restore</button>
+        </div>
+        <div class="result" id="selfMsg" role="status" aria-live="polite"></div>
+      </div>
+      <div class="store" data-store="drive" hidden>
+        <p class="tiny" id="driveNote"></p>
+        <div class="row" id="driveActions" hidden>
+          <button class="btn primary sm" type="button" id="driveBackup">Back up to Drive</button>
+          <button class="btn secondary sm" type="button" id="driveRestore">Restore from Drive</button>
+        </div>
+        <div class="result" id="driveMsg" role="status" aria-live="polite"></div>
+      </div>
+      <p class="tiny">Backups and exports use AES-256-GCM with a key derived from your passphrase (PBKDF2-SHA256, 310k iterations). Storage hosts only ever see ciphertext.</p>
+    </section>
+  </div>
+</aside>
+
+<div class="overlay" id="onboarding" role="dialog" aria-modal="true" aria-labelledby="obTitle1" hidden>
+  <div class="ob-card">
+    <button class="x ob-close" type="button" id="obClose" aria-label="Close">×</button>
+    <section data-step="1">
+      <div class="steps" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+      <h2 id="obTitle1">What are you into?</h2>
+      <p class="ob-sub">Pick a few. We'll build your PC (Personal Context) right here on this device.</p>
+      <div class="cat-grid" id="catChips"></div>
+      <div class="ob-actions">
+        <button class="btn google big" type="button" id="googleBtn"></button>
+        <button class="btn primary big" type="button" id="swipeBtn">Pick by swiping</button>
+      </div>
+      <p class="ob-note">Only public names you approve become PC signals.</p>
+    </section>
+    <section data-step="2" hidden>
+      <div class="steps" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></div>
+      <h2>Swipe to build your PC</h2>
+      <p class="ob-sub">Right to love, left to skip. Arrow keys work too.</p>
+      <div class="deck" id="deck"></div>
+      <div class="deck-controls">
+        <button class="round-lg skip" type="button" id="skipBtn" aria-label="Skip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <button class="round-md" type="button" id="undoBtn" aria-label="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+        <button class="round-lg love" type="button" id="loveBtn" aria-label="Love"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>
+      </div>
+      <div class="deck-foot">
+        <div class="deck-progress" id="deckProgress" role="status" aria-live="polite"></div>
+        <button class="btn primary" type="button" id="deckDone" hidden>Done</button>
+      </div>
+    </section>
+    <section data-step="3" hidden>
+      <div class="steps" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      <div class="ready-mark" aria-hidden="true">✓</div>
+      <h2>Your PC is ready</h2>
+      <p class="ob-sub">It stays on this device. Only these public names are shared when you ask an agent for something.</p>
+      <div class="chips" id="readyChips"></div>
+      <div class="ob-actions">
+        <button class="btn secondary big" type="button" id="readyMore">Add more</button>
+        <button class="btn primary big" type="button" id="readyStart">Start chatting</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="overlay top" id="googleModal" role="dialog" aria-modal="true" aria-labelledby="gTitle" hidden>
+  <div class="g-card">
+    <span class="demo-flag">Demo · no data leaves this page</span>
+    <div data-g="consent">
+      <div class="g-head"><span data-gsvg></span><span>Sign in with Google</span></div>
+      <h2 id="gTitle">PCP wants to read: YouTube subscriptions, YouTube Music library</h2>
+      <div class="g-account"><span class="g-avatar" aria-hidden="true">D</span><div><b>Demo account</b><small>Simulated, not signed in</small></div></div>
+      <ul class="g-scopes">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="3.5"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>YouTube subscriptions</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>YouTube Music library</li>
+      </ul>
+      <p class="g-fine">This is a simulation. Nothing is requested from Google.</p>
+      <details class="g-how"><summary>How this works</summary><p>In production this uses Google's Data Portability API (scopes dataportability.youtube.subscriptions, dataportability.youtube.music) or the YouTube Data API (youtube.readonly). Names are extracted on your device and only public entity names you approve become PC signals.</p></details>
+      <div class="g-actions">
+        <button class="btn secondary" type="button" id="gCancel">Cancel</button>
+        <button class="btn primary" type="button" id="gAllow">Allow</button>
+      </div>
+    </div>
+    <div data-g="scan" hidden>
+      <div class="g-head"><span data-gsvg></span><span>Scanning on your device…</span></div>
+      <div class="g-progress"><i id="gBar"></i></div>
+      <p class="g-fine" id="gScanText">Reading subscriptions…</p>
+    </div>
+    <div data-g="done" hidden>
+      <div class="g-head"><span data-gsvg></span><span>Scan complete</span></div>
+      <div class="ready-mark" aria-hidden="true">✓</div>
+      <h2 id="gFound"></h2>
+      <p class="g-fine">They're at the top of your deck. Swipe to confirm each one.</p>
+      <div class="g-actions"><button class="btn primary" type="button" id="gReview">Review by swiping</button></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as TP from "/sdk/pcp.js";
+
+const TYPES = ["movie", "tv_show", "artist", "book", "podcast", "place", "brand"];
+const TYPE_META = {
+  artist: { label: "Music", emoji: "🎧" },
+  movie: { label: "Movie", emoji: "🎬" },
+  tv_show: { label: "TV", emoji: "📺" },
+  book: { label: "Book", emoji: "📚" },
+  podcast: { label: "Podcast", emoji: "🎙️" },
+  place: { label: "Place", emoji: "📍" },
+  brand: { label: "Brand", emoji: "🛍️" },
+};
+const CATS = [["Music", "artist"], ["Movies", "movie"], ["TV", "tv_show"], ["Books", "book"], ["Podcasts", "podcast"], ["Places", "place"], ["Brands", "brand"]];
+const CAT_LABEL = Object.fromEntries(CATS.map(([name, type]) => [type, name]));
+const entity = ([name, type, desc]) => ({ name, type, desc });
+const DECK = [
+  ["Radiohead", "artist", "Alt-rock · UK"], ["Spirited Away", "movie", "Animated fantasy · 2001"], ["The Office", "tv_show", "Workplace comedy · US"], ["Dune", "book", "Sci-fi classic · Frank Herbert"], ["The Daily", "podcast", "News · The New York Times"], ["Kyoto", "place", "Temples & gardens · Japan"], ["Patagonia", "brand", "Outdoor apparel"],
+  ["Taylor Swift", "artist", "Pop · US"], ["Arrival", "movie", "Sci-fi drama · 2016"], ["Succession", "tv_show", "Family power drama"], ["Norwegian Wood", "book", "Literary fiction · Haruki Murakami"], ["Huberman Lab", "podcast", "Science & health"], ["Central Park", "place", "Urban park · New York"], ["Muji", "brand", "Minimal goods · Japan"],
+  ["Kendrick Lamar", "artist", "Hip-hop · US"], ["Parasite", "movie", "Thriller · 2019"], ["Breaking Bad", "tv_show", "Crime drama"], ["Atomic Habits", "book", "Self-improvement · James Clear"], ["Radiolab", "podcast", "Science stories"], ["Louvre Museum", "place", "Art museum · Paris"], ["Blue Bottle Coffee", "brand", "Specialty coffee"],
+  ["Daft Punk", "artist", "Electronic · France"], ["The Grand Budapest Hotel", "movie", "Comedy · 2014"], ["Stranger Things", "tv_show", "Sci-fi horror"], ["Sapiens", "book", "History · Yuval Noah Harari"], ["How I Built This", "podcast", "Founders & ideas"], ["Santorini", "place", "Island · Greece"], ["Lego", "brand", "Toys & design · Denmark"],
+  ["BTS", "artist", "K-pop · South Korea"], ["Interstellar", "movie", "Space epic · 2014"], ["Fleabag", "tv_show", "Dark comedy · UK"], ["The Hobbit", "book", "Fantasy · J.R.R. Tolkien"], ["99% Invisible", "podcast", "Design & architecture"], ["Apple", "brand", "Consumer tech"],
+  ["Norah Jones", "artist", "Jazz-pop · US"], ["Everything Everywhere All at Once", "movie", "Multiverse comedy · 2022"], ["Planet Earth", "tv_show", "Nature documentary"], ["Project Hail Mary", "book", "Sci-fi · Andy Weir"],
+  ["Billie Eilish", "artist", "Alt-pop · US"], ["La La Land", "movie", "Musical · 2016"], ["Fleetwood Mac", "artist", "Classic rock · UK/US"],
+].map(entity);
+const GOOGLE_DEMO = [
+  ["Arctic Monkeys", "artist", "YouTube Music · Indie rock"], ["Tame Impala", "artist", "YouTube Music · Psychedelic pop"], ["Phoebe Bridgers", "artist", "YouTube Music · Indie folk"], ["The Weeknd", "artist", "YouTube Music · R&B"],
+  ["Mitski", "artist", "YouTube Music · Indie rock"], ["Bon Iver", "artist", "YouTube Music · Folk"], ["Hozier", "artist", "YouTube Music · Soul-folk"], ["Lorde", "artist", "YouTube Music · Art pop"],
+  ["Severance", "tv_show", "YouTube subscription · Thriller"], ["Ted Lasso", "tv_show", "YouTube subscription · Comedy"], ["The Last of Us", "tv_show", "YouTube subscription · Drama"], ["Lex Fridman Podcast", "podcast", "YouTube subscription · Conversations"],
+].map(entity);
+const G_SVG = `<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+const icon = (body, fill = false) => `<svg viewBox="0 0 24 24" fill="${fill ? "currentColor" : "none"}" stroke="${fill ? "none" : "currentColor"}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+const ICON = {
+  trash: icon(`<path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6.5 7l1 13h9l1-13"/>`),
+  key: icon(`<circle cx="7.5" cy="15.5" r="4"/><path d="M10.5 12.5 20 3"/><path d="m16 7 2.5 2.5"/><path d="m18.5 4.5 2 2"/>`),
+  eye: icon(`<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>`),
+  eyeOff: icon(`<path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.9 9.9 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>`),
+  spark: icon(`<path d="M11 2.5l1.9 5.4 5.4 1.9-5.4 1.9L11 17.1l-1.9-5.4-5.4-1.9 5.4-1.9z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/>`, true),
+};
+const JUDGES_FULL = "Our Qloo key hasn't arrived from the organizers yet. The integration uses Qloo's official harness and is auth-tested against hackathon.api.qloo.com. Paste your key to see live re-ranking.";
+const JUDGES_SHORT = "Qloo key pending from organizers. Paste yours to try it live.";
+const SETTINGS_KEY = "pcp-settings";
+const QLOO_DOCS = "https://docs.qloo.com/reference/qloo-llm-hackathon-developer-guide";
+const $ = (id) => document.getElementById(id);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+const label = (t) => String(t ?? "").replace("_", " ");
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+const pcText = (s) => String(s ?? "").replace(/passports?/gi, "PC");
+const params = new URLSearchParams(location.search);
+const demo = params.has("demo");
+const mobile = () => matchMedia("(max-width: 859px)").matches;
+const PROVIDERS = {
+  anthropic: { name: "Anthropic", model: "claude-sonnet-5-5" },
+  openai: { name: "OpenAI-compatible", model: "gpt-5-mini", baseUrl: "https://api.openai.com/v1" },
+  ollama: { name: "Ollama", model: "llama3.2", baseUrl: "http://localhost:11434/v1" },
+};
+const PROVIDER_NAMES = { ...Object.fromEntries(Object.entries(PROVIDERS).map(([k, v]) => [k, v.name])), "openai-compatible": "OpenAI-compatible" };
+const GIS_SRC = "https://accounts.google.com/gsi/client";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const DRIVE_FILE = "pcp-passport.json";
+const QLOO_KEY_SHAPE = /^[\w.-]{8,200}$/;
+const KEY_TRANSPORT_OK = location.protocol === "https:" || ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+const JSON_HEADERS = { "content-type": "application/json" };
+
+let passport = (!demo && TP.load()) || TP.createPassport();
+let settings = { learn: true, lr: "0.5", provider: "anthropic", model: "", baseUrl: "", agents: {}, graphOnly: false, useQloo: true, provenance: false, storage: "device", vaultUrl: "", onboarded: false };
+try { if (!demo) settings = { ...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") }; } catch {}
+let status;
+let qlooKey = null;
+let busy = false;
+let turns = [];
+let openPop = null;
+let conversations = [];
+let historyState = "loading";
+let currentId = null;
+let currentTitle = "New chat";
+let graphData = null;
+let graphState = "idle";
+let navAutoOpened = false;
+const ob = { step: 1, cats: new Set(), google: [], deck: [], index: 0, history: [], loved: [], flying: false };
+
+$("favType").innerHTML = TYPES.map((t) => `<option value="${t}">${label(t)}</option>`).join("");
+$("favType").value = "artist";
+$("catChips").innerHTML = CATS.map(([name, type]) => `<button class="cat" type="button" data-cat="${type}" aria-pressed="false">${name}</button>`).join("");
+$("googleBtn").innerHTML = `${G_SVG}Continue with Google`;
+for (const el of $$("[data-gsvg]")) el.outerHTML = G_SVG;
+$("gFound").textContent = `Found ${GOOGLE_DEMO.length} artists & shows from your YouTube (demo data)`;
+
+const qlooCard = (variant) => `
+  <div class="qcard ${variant}" data-keybox>
+    <div data-when="form">
+      <div class="qhead"><span class="qtile" aria-hidden="true">${ICON.spark}</span><h4>Connect Qloo taste intelligence</h4></div>
+      ${variant === "side"
+        ? `<p class="judges-line"><span class="judges-pill">For judges</span><span class="sr">:</span> ${JUDGES_SHORT}</p><details class="why"><summary>Why?</summary><p>${JUDGES_FULL}</p></details>`
+        : `<div class="judges"><span class="judges-pill">For judges</span> ${JUDGES_FULL}</div>`}
+      <label class="keygroup">${ICON.key}<input type="password" placeholder="Paste your Qloo API key" autocomplete="off" spellcheck="false" aria-label="Qloo API key"><button class="eye" type="button" data-eye aria-label="Show key" aria-pressed="false">${ICON.eye}</button></label>
+      <button class="btn primary qconnect" type="button" data-usekey>Connect</button>
+      <div class="trust-row"><span class="trust">This tab only</span><span class="trust">HTTPS</span><span class="trust">Never stored</span></div>
+      <a class="qdocs" href="${QLOO_DOCS}" target="_blank" rel="noopener">Where do I get a key?</a>
+      <div class="result" data-keymsg role="status" aria-live="polite"></div>
+    </div>
+    <div class="qstatus" data-when="status" hidden><span class="dot idle"></span><span data-qtext>Checking Qloo…</span><button class="qforget" type="button" data-forgetkey hidden>Forget</button></div>
+  </div>`;
+$("sideQloo").innerHTML = qlooCard("side");
+$("settingsQloo").innerHTML = qlooCard("settings");
+
+function persist() {
+  if (!demo) {
+    TP.save(passport);
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+  }
+  renderSettings();
+  renderThread();
+}
+
+function renderSettings() {
+  $("signals").innerHTML = passport.signals.length
+    ? passport.signals.map((s) => `<span class="chip">${esc(s.name)} <small>${esc(label(s.type))}${s.source === "accepted" ? " · learned" : ""}</small><button type="button" data-rm="${esc(s.name)}" aria-label="Remove ${esc(s.name)}">×</button></span>`).join("")
+    : `<span class="tiny">Nothing yet. Tap Add more to swipe through a few favorites.</span>`;
+  $("vetoes").innerHTML = passport.vetoes.map((v) => `<span class="chip veto">${esc(v.name)}</span>`).join("");
+  const w = passport.policy.weights;
+  ["w0", "w1", "w2"].forEach((id, k) => { $(id).textContent = Number(w[k] ?? 1).toFixed(2); });
+  $("updates").textContent = plural(passport.policy.updates, "on-device update");
+  $("pcPill").innerHTML = `PC · <b>${passport.signals.length}</b> signal${passport.signals.length === 1 ? "" : "s"}<span class="pc-upd"> · ${plural(passport.policy.updates, "update")}</span>`;
+  for (const el of $$("[data-setting]")) {
+    const v = settings[el.dataset.setting];
+    if (el.type === "checkbox") el.checked = Boolean(v); else el.value = v ?? "";
+  }
+  renderAgent();
+  renderStorage();
+  renderQloo();
+}
+
+function agentSpec() {
+  const provider = PROVIDERS[settings.provider] ? settings.provider : "anthropic";
+  const agent = { provider };
+  const model = String(settings.model || "").trim();
+  const baseUrl = String(settings.baseUrl || "").trim();
+  if (model) agent.model = model;
+  if (baseUrl && PROVIDERS[provider].baseUrl) agent.baseUrl = baseUrl;
+  return agent;
+}
+
+function renderAgent() {
+  const p = PROVIDERS[settings.provider] ? settings.provider : "anthropic";
+  $("modelInput").placeholder = PROVIDERS[p].model;
+  $("baseUrlField").hidden = !PROVIDERS[p].baseUrl;
+  $("baseUrlInput").placeholder = PROVIDERS[p].baseUrl || "";
+  const ready = status?.providers?.[p];
+  const [dot, text] = demo ? ["idle", "Not checked in demo mode"]
+    : status === undefined ? ["idle", "Checking server…"]
+    : status === null ? ["idle", "Server unreachable, readiness unknown"]
+    : typeof ready !== "boolean" ? ["idle", "Server did not report readiness"]
+    : p === "ollama" ? [ready ? "on" : "", ready ? "No key needed, runs on your machine" : "Start your local model server"]
+    : ready ? ["on", "Key configured on server"] : ["", "Add key to .env"];
+  $("providerStatus").innerHTML = `<span class="dot ${dot}"></span><span>${esc(text)}</span>`;
+}
+
+function renderStorage() {
+  for (const el of $$("[data-store]")) el.hidden = el.dataset.store !== settings.storage;
+  const idField = $("vaultId");
+  if (idField.dataset.for !== passport.id) { idField.value = passport.id; idField.dataset.for = passport.id; }
+  const clientId = status?.google_client_id;
+  $("driveActions").hidden = !clientId;
+  $("driveNote").textContent = clientId ? "Saved to a private app folder in your Google Drive. Only the encrypted file is uploaded."
+    : demo ? "Google Drive setup is not checked in demo mode."
+    : status === undefined ? "Checking Google Drive setup…"
+    : status === null ? "Couldn't reach the server to check Google Drive setup."
+    : "Set GOOGLE_CLIENT_ID on the server to enable Google Drive.";
+  if (settings.storage === "drive" && clientId) loadGis().then(initDrive).catch((err) => say("driveMsg", err.message, "err"));
+}
+
+const chatReady = () => demo || status?.qloo_ready === true || Boolean(qlooKey);
+
+function qlooMode() {
+  if (demo) return { form: false, dot: "idle", text: "Qloo · demo mode" };
+  if (status === undefined) return { form: false, dot: "idle", text: "Checking Qloo…" };
+  if (status?.qloo_ready) return { form: false, dot: "on", text: "Qloo connected" };
+  if (qlooKey) return { form: false, dot: "on", text: "Qloo connected · this tab", forget: true };
+  if (status && status.qloo_byok === false) return { form: false, dot: "", text: "Qloo isn't configured on this server" };
+  return { form: true };
+}
+
+function renderQloo() {
+  const m = qlooMode();
+  for (const box of $$("[data-keybox]")) {
+    box.classList.toggle("on", !m.form);
+    box.querySelector('[data-when="form"]').hidden = !m.form;
+    const row = box.querySelector('[data-when="status"]');
+    row.hidden = m.form;
+    if (m.form) continue;
+    row.classList.toggle("ok", m.dot === "on");
+    row.querySelector(".dot").className = `dot ${m.dot}`;
+    row.querySelector("[data-qtext]").textContent = m.text;
+    row.querySelector("[data-forgetkey]").hidden = !m.forget;
+  }
+  renderGate();
+}
+
+function renderGate() {
+  const ready = chatReady();
+  $("prompt").disabled = !ready;
+  $("prompt").placeholder = ready ? "Ask for anything, e.g. a movie for Friday night" : "Connect Qloo in the sidebar to start";
+  $("send").disabled = !ready || busy;
+  $("composer").classList.toggle("locked", !ready);
+  $("gateHint").hidden = ready;
+  $("hint").hidden = !ready;
+  $("heroCards").classList.toggle("locked", !ready);
+  for (const b of $$("#heroCards .hcard")) b.setAttribute("aria-disabled", String(!ready));
+}
+
+function nudgeQloo() {
+  if (mobile()) setNav(true);
+  const box = $("sideQloo").querySelector(".qcard");
+  box.classList.remove("pulse");
+  void box.offsetWidth;
+  box.classList.add("pulse");
+  const input = box.querySelector(".keygroup input");
+  if (input && !mobile()) input.focus();
+}
+
+function useQlooKey(box) {
+  const input = box.querySelector(".keygroup input");
+  const msg = box.querySelector("[data-keymsg]");
+  const value = input.value.trim();
+  if (!KEY_TRANSPORT_OK) return say(msg, "Open this page over HTTPS to use your own key.", "err");
+  if (!QLOO_KEY_SHAPE.test(value)) return say(msg, "That doesn't look like a Qloo API key.", "err");
+  qlooKey = value;
+  for (const el of $$("[data-keybox] .keygroup input")) el.value = "";
+  for (const btn of $$("[data-eye]")) setEye(btn, false);
+  for (const el of $$("[data-keymsg]")) say(el, "", "");
+  renderQloo();
+  if (mobile()) setNav(false);
+}
+
+function forgetQlooKey() {
+  qlooKey = null;
+  for (const el of $$("[data-keymsg]")) say(el, "", "");
+  renderQloo();
+}
+
+function setEye(btn, show) {
+  btn.closest(".keygroup").querySelector("input").type = show ? "text" : "password";
+  btn.setAttribute("aria-pressed", String(show));
+  btn.setAttribute("aria-label", show ? "Hide key" : "Show key");
+  btn.innerHTML = show ? ICON.eyeOff : ICON.eye;
+}
+
+document.addEventListener("change", (e) => {
+  const key = e.target.dataset?.setting;
+  if (!key) return;
+  const before = settings[key];
+  settings[key] = e.target.type === "checkbox" ? e.target.checked : e.target.value.trim();
+  if (key === "lr") passport.policy.lr = Number(settings.lr);
+  if (key === "provider" && before !== settings.provider) {
+    settings.agents = { ...settings.agents, [before]: { model: settings.model, baseUrl: settings.baseUrl } };
+    const saved = settings.agents[settings.provider] || {};
+    settings.model = saved.model || "";
+    settings.baseUrl = saved.baseUrl || "";
+  }
+  persist();
+});
+
+function say(target, text, kind = "busy") {
+  const el = typeof target === "string" ? $(target) : target;
+  el.textContent = pcText(text || "");
+  el.className = `result ${kind}`;
+}
+const clock = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const readBody = async (res) => { const text = await res.text(); try { return JSON.parse(text); } catch { return {}; } };
+const errorText = (body) => (typeof body?.error === "string" ? body.error : body?.error?.message);
+const isOffline = (err) => err instanceof TypeError && /fetch|network|load/i.test(err.message);
+
+async function api(path, init) {
+  const res = await fetch(path, init);
+  const body = await readBody(res);
+  if (!res.ok) throw new Error(errorText(body) || `Request failed (${res.status})`);
+  return body;
+}
+
+async function run(msgId, buttonIds, fn) {
+  const buttons = buttonIds.map($);
+  for (const b of buttons) b.disabled = true;
+  try {
+    const done = await fn((text) => say(msgId, text));
+    say(msgId, done || "", done ? "ok" : "");
+  } catch (err) {
+    say(msgId, isOffline(err) ? "Couldn't reach the server. Check the URL and that it allows requests from this page." : err.message, "err");
+  } finally {
+    for (const b of buttons) b.disabled = false;
+  }
+}
+
+async function restoreFrom(doc, say) {
+  const envelope = TP.isEncrypted(doc) ? doc : doc?.envelope ?? doc?.passport ?? doc;
+  let passphrase;
+  if (TP.isEncrypted(envelope)) {
+    passphrase = prompt("Passphrase for this backup. Restoring replaces the PC in this browser:");
+    if (!passphrase) return "";
+  }
+  say("Decrypting…");
+  passport = await TP.importPassport(JSON.stringify(envelope), passphrase);
+  persist();
+  syncGraph();
+  return `Restored ${plural(passport.signals.length, "signal")} · ${clock()}`;
+}
+
+async function sealForBackup(say) {
+  const passphrase = prompt("Passphrase to encrypt this backup (AES-256-GCM). You'll need it to restore:");
+  if (!passphrase) return null;
+  say("Encrypting…");
+  return TP.encryptPassport(passport, passphrase);
+}
+
+function vaultEndpoint(id) {
+  let base = location.origin;
+  if (settings.vaultUrl) {
+    let url;
+    try { url = new URL(settings.vaultUrl); } catch { throw new Error("Vault server must be a full URL, e.g. https://vault.example.com"); }
+    if (!/^https?:$/.test(url.protocol)) throw new Error("Vault server must use http or https.");
+    base = url.href.replace(/\/+$/, "");
+  }
+  return `${base}/v1/vault/${encodeURIComponent(id)}`;
+}
+
+$("selfBackup").onclick = () => run("selfMsg", ["selfBackup", "selfRestore"], async (say) => {
+  const url = vaultEndpoint(passport.id);
+  const sealed = await sealForBackup(say);
+  if (!sealed) return "";
+  say("Uploading ciphertext…");
+  const res = await fetch(url, { method: "PUT", headers: JSON_HEADERS, body: JSON.stringify(sealed) });
+  const body = await readBody(res);
+  if (res.status === 404 || res.status === 405) throw new Error("That server has no vault endpoint.");
+  if (!res.ok) throw new Error(errorText(body) || `Vault server error (${res.status})`);
+  return `Encrypted backup stored${body.bytes ? ` (${body.bytes} bytes)` : ""} · ${clock()}`;
+});
+
+$("selfRestore").onclick = () => run("selfMsg", ["selfBackup", "selfRestore"], async (say) => {
+  const id = $("vaultId").value.trim();
+  if (!id) throw new Error("Enter the Backup ID to restore.");
+  const url = vaultEndpoint(id);
+  say("Fetching backup…");
+  const res = await fetch(url);
+  if (res.status === 404) throw new Error("No backup found for this ID on that server.");
+  const body = await readBody(res);
+  if (!res.ok) throw new Error(errorText(body) || `Vault server error (${res.status})`);
+  return restoreFrom(body, say);
+});
+
+let gisLoading = null, tokenClient = null, pendingToken = null, driveToken = null;
+function loadGis() {
+  if (window.google?.accounts?.oauth2) return Promise.resolve();
+  gisLoading ??= new Promise((resolve, reject) => {
+    const s = Object.assign(document.createElement("script"), { src: GIS_SRC, async: true });
+    s.onload = resolve;
+    s.onerror = () => { gisLoading = null; s.remove(); reject(new Error("Could not load Google sign-in. Check your connection.")); };
+    document.head.append(s);
+  });
+  return gisLoading;
+}
+
+function initDrive() {
+  if (tokenClient || !status?.google_client_id || !window.google?.accounts?.oauth2) return;
+  const settle = (fn) => { const p = pendingToken; pendingToken = null; if (p) fn(p); };
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: status.google_client_id,
+    scope: DRIVE_SCOPE,
+    callback: (r) => {
+      if (r.error) return settle((p) => p.reject(new Error(r.error_description || r.error)));
+      driveToken = { value: r.access_token, until: Date.now() + (Number(r.expires_in) || 3600) * 1000 - 60_000 };
+      settle((p) => p.resolve(r.access_token));
+    },
+    error_callback: (e) => settle((p) => p.reject(new Error(e?.type === "popup_closed" ? "Google sign-in was closed." : e?.message || "Google sign-in failed."))),
+  });
+}
+
+function driveAccessToken() {
+  if (driveToken && Date.now() < driveToken.until) return Promise.resolve(driveToken.value);
+  if (!tokenClient) return Promise.reject(new Error("Google sign-in is still loading. Try again in a moment."));
+  return new Promise((resolve, reject) => {
+    pendingToken = { resolve, reject };
+    tokenClient.requestAccessToken();
+  });
+}
+
+async function drive(path, token, init = {}) {
+  const res = await fetch(`https://www.googleapis.com${path}`, { ...init, headers: { authorization: `Bearer ${token}`, ...init.headers } });
+  if (res.status === 401) driveToken = null;
+  if (!res.ok) throw new Error(res.status === 401 ? "Google session expired. Try again." : errorText(await readBody(res)) || `Google Drive error (${res.status})`);
+  return res;
+}
+
+async function findDriveFile(token) {
+  const q = encodeURIComponent(`name = '${DRIVE_FILE}' and trashed = false`);
+  const { files = [] } = await (await drive(`/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime)&pageSize=10`, token)).json();
+  return files.sort((a, b) => String(b.modifiedTime).localeCompare(String(a.modifiedTime)))[0];
+}
+
+$("driveBackup").onclick = () => {
+  const token = driveAccessToken();
+  run("driveMsg", ["driveBackup", "driveRestore"], async (say) => {
+    say("Waiting for Google sign-in…");
+    const access = await token;
+    const sealed = await sealForBackup(say);
+    if (!sealed) return "";
+    say("Uploading ciphertext to Google Drive…");
+    const existing = await findDriveFile(access);
+    const meta = existing ? { name: DRIVE_FILE, mimeType: "application/json" } : { name: DRIVE_FILE, mimeType: "application/json", parents: ["appDataFolder"] };
+    const boundary = `pcp-${crypto.randomUUID()}`;
+    const body = [`--${boundary}`, "Content-Type: application/json; charset=UTF-8", "", JSON.stringify(meta), `--${boundary}`, "Content-Type: application/json", "", JSON.stringify(sealed), `--${boundary}--`, ""].join("\r\n");
+    await drive(existing ? `/upload/drive/v3/files/${existing.id}?uploadType=multipart&fields=id` : "/upload/drive/v3/files?uploadType=multipart&fields=id", access, {
+      method: existing ? "PATCH" : "POST",
+      headers: { "content-type": `multipart/related; boundary=${boundary}` },
+      body,
+    });
+    return `Encrypted backup saved to Google Drive · ${clock()}`;
+  });
+};
+
+$("driveRestore").onclick = () => {
+  const token = driveAccessToken();
+  run("driveMsg", ["driveBackup", "driveRestore"], async (say) => {
+    say("Waiting for Google sign-in…");
+    const access = await token;
+    say("Looking for your backup…");
+    const file = await findDriveFile(access);
+    if (!file) throw new Error("No backup found in this Google Drive yet.");
+    return restoreFrom(await readBody(await drive(`/drive/v3/files/${file.id}?alt=media`, access)), say);
+  });
+};
+
+let syncTimer = null;
+function syncGraph() {
+  if (demo) { loadGraph(); return; }
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    const shared = TP.disclose(passport);
+    try { await api("/v1/graph/signals", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ pc_id: passport.id, signals: shared.signals, vetoes: shared.vetoes }) }); } catch {}
+    loadGraph();
+  }, 300);
+}
+
+function sendGraphFeedback(t, name, liked) {
+  if (demo) { loadGraph(); return; }
+  const body = { pc_id: passport.id, task: t.task, type: t.result.type, name, liked, shown: (t.result.candidates || []).map((c) => c.name) };
+  fetch("/v1/graph/feedback", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify(body) }).then((r) => (r.ok ? loadGraph() : null)).catch(() => {});
+}
+
+async function loadGraph() {
+  if (demo) { graphData = demoGraph(); graphState = "ok"; renderGraph(); return; }
+  try {
+    graphData = await api(`/v1/graph/${encodeURIComponent(passport.id)}`);
+    graphState = "ok";
+  } catch {
+    graphState = "error";
+  }
+  renderGraph();
+}
+
+function demoGraph() {
+  const nodes = [{ id: "user", name: "You", type: null, score: 1 }];
+  const edges = [];
+  const add = (name, type, score, extra = {}) => {
+    const id = `${type}:${norm(name)}`;
+    if (!nodes.some((n) => n.id === id)) nodes.push({ id, name, type, score, ...extra });
+    return id;
+  };
+  for (const s of passport.signals) edges.push({ a: "user", b: add(s.name, s.type, 0.6), w: s.source === "accepted" ? 2 : 1, kind: s.source === "accepted" ? "like" : "love" });
+  for (const v of passport.vetoes) edges.push({ a: "user", b: add(v.name, v.type, 0, { vetoed: true }), w: 1, kind: "veto" });
+  const links = [["Arrival", "movie", "Ex Machina", 0.79], ["Arrival", "movie", "Moon", 0.81], ["Arrival", "movie", "Interstellar", 0.66], ["Spirited Away", "movie", "Her", 0.84], ["Spirited Away", "movie", "Princess Mononoke", 0.88], ["Radiohead", "artist", "Portishead", 0.82], ["Radiohead", "artist", "Massive Attack", 0.79], ["Radiohead", "artist", "Bon Iver", 0.74]];
+  for (const [from, type, to, w] of links) {
+    const a = `${type}:${norm(from)}`;
+    if (nodes.some((n) => n.id === a)) edges.push({ a, b: add(to, type, w / 3), w, kind: "qloo" });
+  }
+  return { nodes, edges, totals: { nodes: nodes.length, edges: edges.length } };
+}
+
+function renderGraph() {
+  const svg = $("pcGraph");
+  $("graphCaption").textContent = demo ? "Demo graph · illustrative data, not computed by the server." : "Trained locally with Personalized PageRank. No LLM tokens.";
+  const data = graphData;
+  const W = 360, H = 240, cx = W / 2, cy = H / 2;
+  if (!data?.nodes || data.nodes.length < 2) {
+    $("graphStats").textContent = "";
+    svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="13" fill="#6a3df0"/><text x="${cx}" y="${cy + 34}" text-anchor="middle" class="g-empty">${graphState === "error" ? "Graph unavailable right now" : "Love a few things to grow your graph"}</text>`;
+    return;
+  }
+  const nodes = data.nodes.slice(0, 60).map((n) => ({ ...n }));
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const edges = (data.edges || []).filter((e) => byId.has(e.a) && byId.has(e.b) && e.a !== e.b);
+  const userEdge = new Map(edges.filter((e) => e.a === "user").map((e) => [e.b, e.kind]));
+  for (const n of nodes) n.kind = n.id === "user" ? "user" : n.vetoed || userEdge.get(n.id) === "veto" ? "veto" : ["love", "like"].includes(userEdge.get(n.id)) ? "loved" : "linked";
+  const ring = (list, rx, ry, offset) => list.forEach((n, i) => {
+    const a = (i / Math.max(list.length, 1)) * Math.PI * 2 + offset;
+    n.x = cx + Math.cos(a) * rx;
+    n.y = cy + Math.sin(a) * ry;
+  });
+  const user = byId.get("user") || nodes[0];
+  user.x = cx; user.y = cy;
+  ring(nodes.filter((n) => n.kind === "loved" || n.kind === "veto"), 70, 56, -Math.PI / 2);
+  ring(nodes.filter((n) => n.kind === "linked"), 140, 100, -Math.PI / 2 + 0.3);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  for (let it = 0; it < 180; it++) {
+    for (const n of nodes) { n.vx = 0; n.vy = 0; }
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        const d2 = Math.max(dx * dx + dy * dy, 1);
+        const d = Math.sqrt(d2);
+        const f = 1300 / d2;
+        dx /= d; dy /= d;
+        a.vx += dx * f; a.vy += dy * f; b.vx -= dx * f; b.vy -= dy * f;
+      }
+    }
+    for (const e of edges) {
+      const a = byId.get(e.a), b = byId.get(e.b);
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.max(Math.hypot(dx, dy), 0.01);
+      const f = (d - (e.a === "user" ? 74 : 58)) * 0.03;
+      a.vx += (dx / d) * f; a.vy += (dy / d) * f; b.vx -= (dx / d) * f; b.vy -= (dy / d) * f;
+    }
+    for (const n of nodes) {
+      if (n === user) continue;
+      n.vx += (cx - n.x) * 0.003;
+      n.vy += (cy - n.y) * 0.005;
+      n.x = clamp(n.x + clamp(n.vx, -5, 5), 44, W - 44);
+      n.y = clamp(n.y + clamp(n.vy, -5, 5), 16, H - 22);
+    }
+  }
+  const fill = { user: "#6a3df0", loved: "#8b66ff", linked: "#d6c8ff", veto: "#c4c2cf" };
+  const radius = (n) => (n.kind === "user" ? 13 : n.kind === "linked" ? 4.5 + clamp(n.score || 0, 0, 1) * 5 : 7.5);
+  const topLinked = new Set(nodes.filter((n) => n.kind === "linked").sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 8).map((n) => n.id));
+  const short = (s) => (s.length > 18 ? `${s.slice(0, 17)}…` : s);
+  const lines = edges.map((e) => {
+    const a = byId.get(e.a), b = byId.get(e.b);
+    const veto = e.kind === "veto";
+    return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${veto ? "#c4c2cf" : e.kind === "qloo" ? "#cdbdff" : "#a78bfa"}" stroke-width="${(0.8 + clamp(Number(e.w) || 0, 0, 4) * 0.9).toFixed(2)}" stroke-linecap="round" opacity="${veto ? 0.9 : 0.7}"${veto ? ' stroke-dasharray="3 3"' : ""}/>`;
+  }).join("");
+  const dots = nodes.map((n) => `<g><title>${esc(n.name)}</title><circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${radius(n).toFixed(1)}" fill="${fill[n.kind]}" stroke="#fff" stroke-width="1.5"/></g>`).join("");
+  const labels = nodes.filter((n) => n.kind !== "linked" || topLinked.has(n.id)).map((n) =>
+    n.kind === "user"
+      ? `<text x="${n.x}" y="${n.y + 3.5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">You</text>`
+      : `<text class="g-label" x="${n.x.toFixed(1)}" y="${(n.y + radius(n) + 10).toFixed(1)}" text-anchor="middle"${n.kind === "veto" ? ' text-decoration="line-through"' : ""}>${esc(short(n.name))}</text>`).join("");
+  svg.innerHTML = lines + dots + labels;
+  const totals = data.totals || { nodes: nodes.length, edges: edges.length };
+  $("graphStats").textContent = `${plural(totals.nodes, "node")} · ${plural(totals.edges, "edge")}`;
+}
+
+function openSettings(open, section) {
+  document.body.classList.toggle("settings", open);
+  if (!open) return;
+  setNav(false);
+  loadGraph();
+  if (section) $(section).scrollIntoView({ block: "start" }); else $("drawerBody").scrollTop = 0;
+}
+const setNav = (open) => document.body.classList.toggle("nav-open", open);
+$("navSettings").onclick = () => openSettings(true);
+$("navPC").onclick = $("pcChip").onclick = () => openSettings(true, "pcGroup");
+$("closeSettings").onclick = $("scrim").onclick = () => openSettings(false);
+$("openNav").onclick = () => setNav(true);
+$("sideScrim").onclick = () => setNav(false);
+$("newChat").onclick = () => newChat();
+$("gateHint").onclick = nudgeQloo;
+$("addMore").onclick = () => { openSettings(false); openOnboarding(1); };
+$("manualToggle").onclick = () => {
+  const open = $("addForm").hidden;
+  $("addForm").hidden = !open;
+  $("manualToggle").setAttribute("aria-expanded", String(open));
+  if (open) $("favName").focus();
+};
+
+$("addForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  TP.addSignal(passport, $("favName").value, $("favType").value, "seed");
+  $("favName").value = "";
+  persist();
+  syncGraph();
+});
+
+$("exportBtn").onclick = async () => {
+  const passphrase = prompt("Passphrase to encrypt your PC (AES-256-GCM):");
+  if (!passphrase) return;
+  const sealed = await TP.encryptPassport(passport, passphrase);
+  Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(sealed, null, 2)], { type: "application/json" })), download: "pcp-personal-context.json" }).click();
+};
+$("importBtn").onclick = () => $("importFile").click();
+$("importFile").onchange = async (e) => {
+  try {
+    const text = await e.target.files[0].text();
+    const passphrase = TP.isEncrypted(JSON.parse(text)) ? prompt("Passphrase for this PC file:") : undefined;
+    if (passphrase === null) return;
+    passport = await TP.importPassport(text, passphrase);
+    persist();
+    syncGraph();
+    say("pcMsg", `Imported ${plural(passport.signals.length, "signal")} · ${clock()}`, "ok");
+  } catch (err) { say("pcMsg", err instanceof SyntaxError ? "That file isn't a PC file." : err.message, "err"); }
+  finally { e.target.value = ""; }
+};
+$("resetBtn").onclick = () => {
+  if (!confirm("Reset your PC? This clears every signal, the on-device model and your PC graph.")) return;
+  if (!demo) fetch(`/v1/graph/${encodeURIComponent(passport.id)}`, { method: "DELETE" }).catch(() => {});
+  passport = TP.createPassport();
+  persist();
+  loadGraph();
+};
+
+const scoreText = (v) => (v > 0 && v < 0.01 ? "<0.01" : Number(v).toFixed(2));
+
+function pickRows(result, turnIndex) {
+  const view = settings.useQloo ? passport : { ...passport, policy: { ...passport.policy, weights: [1, 0, 1] } };
+  const rows = TP.distribution(view, result.candidates || []);
+  const max = Math.max(...rows.map((r) => Math.max(r.p, r.p_llm)), 0.01);
+  return rows.map((r, i) => {
+    const qloo = r.qloo == null ? "Not scored by Qloo" : `${r.qloo_kind === "rank" ? "Qloo rank" : "Qloo affinity"} ${Number(r.qloo).toFixed(2)}`;
+    const graph = typeof r.graph !== "number" ? ""
+      : r.graph < 0 ? `<span class="gscore">PC graph · vetoed</span>`
+      : `<span class="gscore">PC graph <i><b style="width:${Math.max(4, Math.min(r.graph, 1) * 100)}%"></b></i>${scoreText(r.graph)}</span>`;
+    return `
+    <div class="pick ${i === 0 ? "top" : ""}">
+      <span class="rank">${i + 1}</span>
+      <div class="pname"><b>${esc(r.name)}${i === 0 ? `<span class="badge">Top pick</span>` : ""}</b><small><span>${qloo}</span>${graph}</small></div>
+      <div class="bars">
+        <div class="bar agent"><span>Agent</span><div class="track"><i style="width:${(r.p_llm / max) * 100}%"></i></div><span>${(r.p_llm * 100).toFixed(0)}%</span></div>
+        <div class="bar you"><span>You</span><div class="track"><i style="width:${(r.p / max) * 100}%"></i></div><span>${(r.p * 100).toFixed(0)}%</span></div>
+      </div>
+      <div class="fb"><button class="round" type="button" data-turn="${turnIndex}" data-like="${esc(r.name)}" aria-label="Good pick: ${esc(r.name)}">👍</button><button class="round" type="button" data-turn="${turnIndex}" data-nope="${esc(r.name)}" aria-label="Not for me: ${esc(r.name)}">👎</button></div>
+    </div>`;
+  }).join("");
+}
+
+function agentLabel(t) {
+  const r = t.result;
+  if (r.engine === "graph") return "PC graph + Qloo · no LLM tokens";
+  const used = [PROVIDER_NAMES[r.provider] || r.provider, r.model].filter(Boolean).join(" · ");
+  if (used) return used;
+  const a = t.agent || {};
+  return `${PROVIDER_NAMES[a.provider] || "server default"}${a.model ? ` · ${a.model}` : ""} (requested)`;
+}
+
+function typeHead(t, i) {
+  const r = t.result;
+  const name = CAT_LABEL[r.type] || label(r.type || "picks");
+  const how = r.inferred?.type ? ` · inferred ${Math.round((Number(r.inferred.confidence) || 0) * 100)}%` : r.inferred === null ? " · chosen by you" : "";
+  const pop = openPop === i ? `<div class="type-pop" role="group" aria-label="Ask again as">${CATS.map(([n, type]) => `<button type="button" data-retype="${type}" data-turn="${i}"${type === r.type ? ' aria-current="true"' : ""}>${n}</button>`).join("")}</div>` : "";
+  return `<div class="answer-head"><span class="infer">${esc(name)}${how}</span><button class="change" type="button" data-change="${i}" aria-expanded="${openPop === i}">change</button></div>${pop}`;
+}
+
+const AI = `<div class="avatar" aria-hidden="true"><img src="/brand/mark.png" alt="" width="22" height="22"></div>`;
+
+function agentTurn(t, i) {
+  const q = t.result.qloo || {};
+  const live = ["ok", "partial", "degraded"].includes(q.status);
+  const note = q.status === "simulated"
+    ? `<div class="notice amber">${esc(q.summary)}</div>`
+    : live ? `<div class="notice ok">Re-weighted with Qloo taste${q.correlation_id ? ` · trace ${esc(q.correlation_id)}` : ""}</div>`
+    : `<div class="notice amber">Qloo could not score these options (${esc(pcText(q.error?.code || q.status || "unavailable"))}). Showing the ${t.result.engine === "graph" ? "PC graph's" : "agent's own"} ranking.</div>`;
+  const unresolved = Array.isArray(q.unresolved) ? q.unresolved.filter((u) => u?.input) : [];
+  const missed = unresolved.length ? `<p class="subtle">Qloo couldn't match ${unresolved.map((u) => `“${esc(u.input)}”${u.candidates?.length ? ` (did you mean ${u.candidates.slice(0, 3).map(esc).join(", ")}?)` : ""}`).join(", ")}, so ${unresolved.length === 1 ? "it was" : "they were"} left out of the taste scoring.</p>` : "";
+  const prov = settings.provenance ? `<pre class="prov">${esc(JSON.stringify({ status: q.status, correlation_id: q.correlation_id, requests: q.requests, graph: t.result.graph }, null, 2))}</pre>` : "";
+  const count = (t.result.candidates || []).length;
+  return `<div class="msg">${AI}<div class="card">
+    ${typeHead(t, i)}
+    <p class="lead">${count ? `Here are my ${esc(label(t.result.type || "pick"))} picks for “${esc(t.task)}”, re-ranked by your PC:` : `I couldn't find ${esc(label(t.result.type || ""))} options for “${esc(t.task)}” yet.`}</p>
+    ${note}${missed}${count ? `<div class="picks">${pickRows(t.result, i)}</div>` : ""}
+    <div class="meta"><span class="agent-tag">Agent: ${esc(agentLabel(t))}</span><span>Rate a pick to train your on-device model</span></div>${prov}
+  </div></div>`;
+}
+
+const heroHTML = () => `<div class="hero">
+  <img class="hero-mark" src="/brand/mark.png" alt="" width="48" height="48">
+  <h2>What are you in the mood for?</h2>
+  <p>Answers re-ranked by your Personal Context (PC). It learns from every 👍/👎.</p>
+  ${passport.signals.length ? "" : `<button class="setup-link" type="button" data-build>Set up your PC in 30 seconds →</button>`}
+</div>`;
+
+function turnHTML(t, i) {
+  if (t.role === "user") return `<div class="msg user"><div class="bubble">${esc(t.text)}${t.type ? `<small>as ${esc(CAT_LABEL[t.type] || label(t.type))}</small>` : ""}</div></div>`;
+  if (t.role === "error") return `<div class="msg">${AI}<div class="card slim"><div class="notice err">${esc(pcText(t.text))}</div></div></div>`;
+  if (t.role === "pending") return `<div class="msg">${AI}<div class="card slim"><span class="typing"><i></i><i></i><i></i></span>Thinking, then checking your taste with Qloo…</div></div>`;
+  return agentTurn(t, i);
+}
+
+function renderThread() {
+  const empty = !turns.length;
+  $("stage").classList.toggle("empty", empty);
+  $("inner").innerHTML = empty ? heroHTML() : turns.map(turnHTML).join("");
+  if (!empty) $("thread").scrollTop = $("thread").scrollHeight;
+  $("chatTitle").textContent = currentTitle;
+}
+
+function ago(iso) {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (!Number.isFinite(s)) return "";
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  if (s < 604800) return `${Math.floor(s / 86400)}d ago`;
+  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function renderConversations() {
+  const list = $("convList");
+  if (historyState === "loading") { list.innerHTML = `<p class="side-empty">Loading chats…</p>`; return; }
+  if (!conversations.length) { list.innerHTML = `<p class="side-empty">${historyState === "error" ? "History is unavailable right now." : "No chats yet. Ask something to start one."}</p>`; return; }
+  list.innerHTML = [...conversations].sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).map((c) => `
+    <div class="conv${c.id === currentId ? " active" : ""}">
+      <button class="conv-open" type="button" data-conv="${esc(c.id)}"${c.id === currentId ? ' aria-current="true"' : ""}><span class="conv-title">${esc(c.title)}</span><span class="conv-time">${esc(ago(c.updated_at))}</span></button>
+      <button class="conv-del" type="button" data-del="${esc(c.id)}" aria-label="Delete ${esc(c.title)}">${ICON.trash}</button>
+    </div>`).join("");
+}
+
+async function loadConversations() {
+  try {
+    const list = await api("/v1/conversations");
+    conversations = Array.isArray(list) ? list : [];
+    historyState = "ok";
+  } catch {
+    historyState = "error";
+  }
+  renderConversations();
+}
+
+function newChat() {
+  currentId = null;
+  currentTitle = "New chat";
+  turns = [];
+  openPop = null;
+  setNav(false);
+  renderConversations();
+  renderThread();
+  if (chatReady()) $("prompt").focus();
+}
+
+async function openConversation(id) {
+  setNav(false);
+  openPop = null;
+  try {
+    const conv = await api(`/v1/conversations/${encodeURIComponent(id)}`);
+    currentId = conv.id;
+    currentTitle = conv.title || "Untitled chat";
+    turns = (Array.isArray(conv.messages) ? conv.messages : []).filter((m) => (m?.role === "user" && typeof m.text === "string") || (m?.role === "agent" && Array.isArray(m.result?.candidates)));
+  } catch (err) {
+    currentId = null;
+    currentTitle = "New chat";
+    turns = [{ role: "error", text: `Couldn't open that chat: ${err.message}` }];
+  }
+  renderConversations();
+  renderThread();
+}
+
+async function deleteConversation(id) {
+  const conv = conversations.find((c) => c.id === id);
+  if (!confirm(`Delete “${conv?.title || "this chat"}”?`)) return;
+  try {
+    await api(`/v1/conversations/${encodeURIComponent(id)}`, { method: "DELETE" });
+    conversations = conversations.filter((c) => c.id !== id);
+    if (id === currentId) newChat(); else renderConversations();
+  } catch (err) {
+    $("historyCaption").textContent = `Couldn't delete: ${err.message}`;
+  }
+}
+
+const savedMessages = (thread) => thread
+  .filter((t) => t.role === "user" || t.role === "agent")
+  .map((t) => (t.role === "user" ? { role: "user", text: t.text } : { role: "agent", task: t.task, result: t.result }));
+
+async function saveConversation(id, thread) {
+  try {
+    await api(`/v1/conversations/${encodeURIComponent(id)}`, { method: "PUT", headers: JSON_HEADERS, body: JSON.stringify({ messages: savedMessages(thread) }) });
+    $("historyCaption").textContent = "Demo history · local SQLite";
+    await loadConversations();
+  } catch {
+    $("historyCaption").textContent = "Demo history · last chat not saved";
+  }
+}
+
+async function ask(task, type = null) {
+  if (!chatReady()) { nudgeQloo(); return; }
+  if (busy) return;
+  const thread = turns;
+  openPop = null;
+  thread.push({ role: "user", text: task, ...(type ? { type } : {}) }, { role: "pending" });
+  busy = true;
+  renderThread();
+  renderGate();
+  let convId = currentId;
+  if (!convId && !demo) {
+    try {
+      const conv = await api("/v1/conversations", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ title: task }) });
+      convId = conv.id;
+      if (thread === turns) { currentId = conv.id; currentTitle = conv.title || task; $("chatTitle").textContent = currentTitle; }
+      conversations = [{ id: conv.id, title: conv.title, demo: false, created_at: conv.created_at, updated_at: conv.updated_at }, ...conversations];
+      historyState = "ok";
+      renderConversations();
+    } catch {
+      $("historyCaption").textContent = "Demo history · this chat isn't being saved";
+    }
+  }
+  const payload = { task, passport: TP.disclose(passport), agent: agentSpec(), engine: settings.graphOnly ? "graph" : "auto" };
+  if (!demo) payload.pc_id = passport.id;
+  if (type) payload.type = type;
+  const headers = { ...JSON_HEADERS };
+  if (qlooKey) headers["x-qloo-api-key"] = qlooKey;
+  try {
+    const res = await fetch("/v1/propose", { method: "POST", headers, body: JSON.stringify(payload) });
+    const body = await readBody(res);
+    if (!res.ok) throw new Error(errorText(body) || `Agent request failed (${res.status})`);
+    thread.splice(thread.length - 1, 1, { role: "agent", task, agent: payload.agent, result: body });
+  } catch (err) {
+    thread.splice(thread.length - 1, 1, { role: "error", text: isOffline(err) ? "Couldn't reach the server. Is it running?" : err.message });
+  } finally {
+    busy = false;
+    renderGate();
+    if (thread === turns) renderThread();
+    if (convId && !demo) saveConversation(convId, thread);
+    if (document.body.classList.contains("settings")) loadGraph();
+  }
+}
+
+$("composer").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const task = $("prompt").value.trim();
+  if (!task) return;
+  if (!chatReady()) { nudgeQloo(); return; }
+  $("prompt").value = "";
+  ask(task);
+});
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const d = b.dataset;
+  if (d.rm) { TP.removeSignal(passport, d.rm); persist(); syncGraph(); }
+  if (d.suggest) ask(d.suggest);
+  if ("usekey" in d) useQlooKey(b.closest("[data-keybox]"));
+  if ("forgetkey" in d) forgetQlooKey();
+  if ("eye" in d) setEye(b, b.getAttribute("aria-pressed") !== "true");
+  if ("build" in d) openOnboarding(1);
+  if (d.conv) openConversation(d.conv);
+  if (d.del) deleteConversation(d.del);
+  if (d.change !== undefined) { const top = $("thread").scrollTop; openPop = openPop === Number(d.change) ? null : Number(d.change); renderThread(); $("thread").scrollTop = top; }
+  if (d.retype) { const t = turns[Number(d.turn)]; if (t?.task) ask(t.task, d.retype); }
+  if (d.cat) {
+    if (ob.cats.has(d.cat)) ob.cats.delete(d.cat); else ob.cats.add(d.cat);
+    b.setAttribute("aria-pressed", String(ob.cats.has(d.cat)));
+  }
+  const t = d.turn !== undefined && !d.retype ? turns[Number(d.turn)] : null;
+  if ((d.like || d.nope) && t?.result) {
+    const name = d.like || d.nope;
+    if (settings.learn) { TP.feedback(passport, t.result.candidates, name, Boolean(d.like), t.result.type); persist(); }
+    sendGraphFeedback(t, name, Boolean(d.like));
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.matches?.("[data-keybox] .keygroup input")) { e.preventDefault(); useQlooKey(e.target.closest("[data-keybox]")); return; }
+  if (e.key === "Escape") {
+    if (!$("googleModal").hidden) closeGoogle();
+    else if (!$("onboarding").hidden) closeOnboarding();
+    else if (openPop !== null) { openPop = null; renderThread(); }
+    else if (document.body.classList.contains("settings")) openSettings(false);
+    else setNav(false);
+    return;
+  }
+  const typing = e.target.matches?.("input, select, textarea");
+  if (!typing && !$("onboarding").hidden && $("googleModal").hidden && ob.step === 2) {
+    if (e.key === "ArrowRight") { e.preventDefault(); decide("love"); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); decide("skip"); }
+  }
+});
+
+function openOnboarding(step = 1) {
+  $("onboarding").hidden = false;
+  showStep(step);
+}
+
+function closeOnboarding() {
+  $("onboarding").hidden = true;
+  closeGoogle();
+  settings.onboarded = true;
+  persist();
+}
+
+function showStep(n) {
+  ob.step = n;
+  for (const s of $$("[data-step]")) s.hidden = Number(s.dataset.step) !== n;
+  if (n === 2) { buildDeck(); renderDeck(); }
+  if (n === 3) renderReady();
+}
+
+function buildDeck() {
+  const want = ob.cats.size ? ob.cats : null;
+  const have = new Set(passport.signals.map((s) => norm(s.name)));
+  const google = ob.google.filter((e) => !have.has(norm(e.name))).map((e) => ({ ...e, google: true }));
+  const taken = new Set([...have, ...google.map((e) => norm(e.name))]);
+  ob.deck = [...google, ...DECK.filter((e) => !taken.has(norm(e.name)) && (!want || want.has(e.type)))];
+  ob.index = 0;
+  ob.history = [];
+}
+
+const cardHTML = (e, depth) => `
+  <div class="swipe-card" data-depth="${depth}"${depth ? ' aria-hidden="true"' : ""}>
+    <div class="card-top"><span class="cat-badge">${TYPE_META[e.type].label}</span>${e.google ? `<span class="g-badge">${G_SVG}From Google (demo)</span>` : ""}</div>
+    <div class="card-emoji" aria-hidden="true">${TYPE_META[e.type].emoji}</div>
+    <h3>${esc(e.name)}</h3>
+    <p>${esc(e.desc)}</p>
+    <span class="stamp love" aria-hidden="true">LOVE</span><span class="stamp skip" aria-hidden="true">SKIP</span>
+  </div>`;
+
+function renderDeck() {
+  const upcoming = ob.deck.slice(ob.index, ob.index + 3);
+  $("deck").innerHTML = upcoming.length
+    ? upcoming.map((e, i) => cardHTML(e, i)).reverse().join("")
+    : `<div class="deck-empty"><b>That's the whole deck</b><span>Tap Done, or add anything else from Your PC.</span></div>`;
+  const top = $("deck").querySelector('[data-depth="0"]');
+  if (top) attachDrag(top);
+  const n = ob.loved.length;
+  $("deckProgress").innerHTML = `${n} loved · ${n >= 3 ? "nice, keep going or tap Done" : "pick at least 3"}<i><b style="width:${Math.min(n / 3, 1) * 100}%"></b></i>`;
+  $("deckDone").hidden = n < 3 && upcoming.length > 0;
+  $("undoBtn").disabled = !ob.history.length;
+  $("skipBtn").disabled = $("loveBtn").disabled = !upcoming.length;
+}
+
+function setStamps(card, dx) {
+  card.querySelector(".stamp.love").style.opacity = Math.max(0, Math.min(1, dx / 100));
+  card.querySelector(".stamp.skip").style.opacity = Math.max(0, Math.min(1, -dx / 100));
+}
+
+function attachDrag(card) {
+  let start = null, dx = 0, dy = 0;
+  card.addEventListener("pointerdown", (e) => {
+    if (ob.flying) return;
+    start = { x: e.clientX, y: e.clientY };
+    dx = dy = 0;
+    card.setPointerCapture(e.pointerId);
+    card.style.transition = "none";
+  });
+  card.addEventListener("pointermove", (e) => {
+    if (!start) return;
+    dx = e.clientX - start.x;
+    dy = e.clientY - start.y;
+    card.style.transform = `translate(${dx}px, ${dy * 0.4}px) rotate(${dx / 16}deg)`;
+    card.style.opacity = String(1 - Math.min(Math.abs(dx) / 700, 0.3));
+    setStamps(card, dx);
+  });
+  const end = () => {
+    if (!start) return;
+    start = null;
+    if (Math.abs(dx) > 110) return decide(dx > 0 ? "love" : "skip", dy * 0.4);
+    card.style.transition = "";
+    card.style.transform = "";
+    card.style.opacity = "";
+    setStamps(card, 0);
+  };
+  card.addEventListener("pointerup", end);
+  card.addEventListener("pointercancel", end);
+}
+
+function decide(action, dy = 0) {
+  const e = ob.deck[ob.index];
+  const card = $("deck").querySelector('[data-depth="0"]');
+  if (!e || !card || ob.flying) return;
+  ob.flying = true;
+  const dir = action === "love" ? 1 : -1;
+  setStamps(card, dir * 100);
+  card.style.transition = "transform .3s ease, opacity .3s ease";
+  card.style.transform = `translate(${dir * 520}px, ${dy}px) rotate(${dir * 26}deg)`;
+  card.style.opacity = "0";
+  if (action === "love") { TP.addSignal(passport, e.name, e.type, "seed"); ob.loved.push(e); }
+  ob.history.push({ e, action });
+  setTimeout(() => {
+    ob.index += 1;
+    ob.flying = false;
+    persist();
+    renderDeck();
+    if (action === "love") syncGraph();
+  }, 280);
+}
+
+function undo() {
+  if (ob.flying) return;
+  const last = ob.history.pop();
+  if (!last) return;
+  if (last.action === "love") { TP.removeSignal(passport, last.e.name); ob.loved = ob.loved.filter((x) => x !== last.e); syncGraph(); }
+  ob.index = Math.max(0, ob.index - 1);
+  persist();
+  renderDeck();
+}
+
+function renderReady() {
+  const items = ob.loved.length ? ob.loved : passport.signals;
+  $("readyChips").innerHTML = items.length
+    ? items.map((s) => `<span class="chip plain">${esc(s.name)}</span>`).join("")
+    : `<span class="tiny">Nothing loved yet. You can add favorites any time from Your PC.</span>`;
+}
+
+$("obClose").onclick = closeOnboarding;
+$("swipeBtn").onclick = () => showStep(2);
+$("googleBtn").onclick = () => openGoogle();
+$("skipBtn").onclick = () => decide("skip");
+$("loveBtn").onclick = () => decide("love");
+$("undoBtn").onclick = undo;
+$("deckDone").onclick = () => showStep(3);
+$("readyMore").onclick = () => showStep(1);
+$("readyStart").onclick = () => {
+  closeOnboarding();
+  if (chatReady()) $("prompt").focus(); else nudgeQloo();
+};
+
+function gView(name) {
+  for (const el of $$("[data-g]")) el.hidden = el.dataset.g !== name;
+}
+
+function openGoogle() {
+  $("googleModal").hidden = false;
+  gView("consent");
+  $("gBar").style.width = "0";
+}
+
+function closeGoogle() {
+  $("googleModal").hidden = true;
+}
+
+$("gCancel").onclick = closeGoogle;
+$("gAllow").onclick = () => {
+  gView("scan");
+  $("gScanText").textContent = "Reading subscriptions…";
+  requestAnimationFrame(() => requestAnimationFrame(() => { $("gBar").style.width = "100%"; }));
+  setTimeout(() => { $("gScanText").textContent = "Extracting public names on this device…"; }, 800);
+  setTimeout(() => gView("done"), 1700);
+};
+$("gReview").onclick = () => {
+  ob.google = GOOGLE_DEMO;
+  closeGoogle();
+  openOnboarding(2);
+};
+
+async function checkStatus() {
+  try {
+    const res = await fetch("/api/status");
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    status = await res.json();
+  } catch {
+    status = null;
+  }
+  renderAgent();
+  renderStorage();
+  renderQloo();
+  if (!chatReady() && mobile() && !navAutoOpened) { navAutoOpened = true; setNav(true); }
+}
+
+if (demo) {
+  for (const [n, t] of [["Radiohead", "artist"], ["Arrival", "movie"], ["Spirited Away", "movie"]]) TP.addSignal(passport, n, t);
+  const sim = [["The Shawshank Redemption", 0.22, 0.31, 0.05], ["Inception", 0.18, 0.62, 0.34], ["The Dark Knight", 0.16, 0.28, 0.08], ["Interstellar", 0.12, 0.66, 0.52], ["Pulp Fiction", 0.1, 0.35, 0.06], ["Her", 0.08, 0.84, 0.71], ["Ex Machina", 0.08, 0.79, 0.88], ["Moon", 0.06, 0.81, 0.93]];
+  const result = {
+    type: "movie",
+    inferred: { type: "movie", confidence: 0.92 },
+    engine: "agent",
+    provider: "anthropic",
+    model: "claude-sonnet-5-5",
+    candidates: sim.map(([name, prior, qloo, graph]) => ({ name, prior, qloo, qloo_kind: "affinity", graph })),
+    qloo: { status: "simulated", summary: "SIMULATED DEMO: illustrative affinity values, not Qloo output." },
+  };
+  if (!params.has("new")) {
+    turns.push({ role: "user", text: "Something to watch on a Friday night" }, { role: "agent", task: "Something to watch on a Friday night", result });
+    currentTitle = "Demo · Friday night movie";
+  }
+  if (params.get("step") === "2") {
+    TP.feedback(passport, result.candidates, "Her", true, "movie");
+    TP.feedback(passport, result.candidates, "The Dark Knight", false, "movie");
+  }
+} else {
+  checkStatus();
+}
+renderConversations();
+loadConversations();
+persist();
+loadGraph();
+if (demo && params.has("settings")) openSettings(true);
+
+const forced = params.get("onboarding");
+if (forced === "1") openOnboarding(1);
+else if (forced === "2") openOnboarding(2);
+else if (forced === "google") { openOnboarding(1); openGoogle(); }
+else if (!demo && !passport.signals.length && !settings.onboarded) openOnboarding(1);
+</script>
+</body>
+</html>

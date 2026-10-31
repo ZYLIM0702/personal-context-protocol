@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "personal-context": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["bin/pcp.mjs", "mcp"],
+      "env": {
+        "PCP_URL": "${PCP_URL:-http://127.0.0.1:8787}",
+        "PCP_PASSPORT": "${PCP_PASSPORT:-}",
+        "PCP_PASSPHRASE": "${PCP_PASSPHRASE:-}",
+        "PCP_QLOO_API_KEY": "${PCP_QLOO_API_KEY:-}"
+      }
+    }
+  }
+}

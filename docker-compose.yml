@@ -1,0 +1,19 @@
+services:
+  pcp:
+    build: .
+    image: personal-context-protocol:latest
+    # Bound to localhost; expose it publicly through a reverse proxy or Cloudflare tunnel.
+    ports:
+      - "127.0.0.1:${PORT:-8787}:8787"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+    volumes:
+      - pcp-data:/app/data # encrypted vault backups (ciphertext only)
+    restart: unless-stopped
+
+volumes:
+  pcp-data:

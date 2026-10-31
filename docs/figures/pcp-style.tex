@@ -1,0 +1,69 @@
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage[default,semibold]{sourcesanspro}
+\usepackage[scale=0.92]{sourcecodepro}
+\usepackage{fontawesome5}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,positioning,backgrounds,fit,decorations.pathreplacing}
+\pgfdeclarelayer{edges}
+\pgfsetlayers{background,edges,main}
+
+\definecolor{brand}{HTML}{6A3DF0}
+\definecolor{brandlight}{HTML}{A78BFA}
+\definecolor{lavender}{HTML}{F4F0FF}
+\definecolor{ink}{HTML}{151A2D}
+\definecolor{muted}{HTML}{6B6B80}
+\definecolor{hairline}{HTML}{E8E5F0}
+\definecolor{qloo}{HTML}{14B8A6}
+\definecolor{qloodark}{HTML}{0F766E}
+\definecolor{qlootint}{HTML}{ECFAF8}
+\definecolor{llm}{HTML}{9CA3AF}
+\definecolor{llmdark}{HTML}{6B7280}
+\definecolor{llmtint}{HTML}{F6F7F9}
+
+\newcommand{\fsHead}{\fontsize{11}{13}\selectfont}
+\newcommand{\fsTitle}{\fontsize{9.5}{11.5}\selectfont}
+\newcommand{\fsBody}{\fontsize{8.5}{10.5}\selectfont}
+\newcommand{\fsSmall}{\fontsize{7.5}{9.2}\selectfont}
+\newcommand{\fsTiny}{\fontsize{7}{8.4}\selectfont}
+\newcommand{\kicker}[1]{{\fontsize{7.5}{9}\selectfont\bfseries\addfontfeature{LetterSpace=9}\MakeUppercase{#1}}}
+\newcommand{\code}[1]{{\ttfamily #1}}
+\newcommand{\tokens}[1]{{\fsTiny\bfseries #1}}
+\newcommand{\rarr}{{\color{brand}$\rightarrow$}\ }
+\newcommand{\larr}{{\color{brand}$\leftarrow$}\ }
+\newcommand{\sto}{$\rightarrow$}
+
+\tikzset{
+  figure/.style={
+    show background rectangle,
+    inner frame sep=14pt,
+    background rectangle/.style={fill=white, draw=none},
+    font=\fsBody, text=ink, line cap=round, line join=round,
+  },
+  card/.style={
+    rounded corners=6pt, draw=hairline, line width=0.8pt, fill=white,
+    align=center, inner sep=5pt, text=ink,
+  },
+  zone/.style={
+    rounded corners=12pt, draw=brandlight!55, line width=0.8pt, fill=lavender,
+  },
+  chip/.style={
+    rounded corners=4pt, fill=lavender, draw=none, text=brand,
+    font=\fsSmall, inner xsep=5pt, inner ysep=3pt, align=center,
+  },
+  qloocard/.style={card, draw=qloo, fill=qlootint},
+  llmcard/.style={card, draw=llm, fill=llmtint, dash pattern=on 3pt off 2pt},
+  arrow/.style={
+    draw=ink!65, line width=0.9pt,
+    -{Stealth[length=6pt, width=4.6pt, round]},
+  },
+  twoway/.style={
+    draw=ink!65, line width=0.9pt,
+    {Stealth[length=6pt, width=4.6pt, round]}-{Stealth[length=6pt, width=4.6pt, round]},
+  },
+  lbl/.style={font=\fsTiny, text=muted, align=center, inner sep=1.5pt},
+  badge/.style={
+    rounded corners=5pt, font=\fsTiny\bfseries, inner xsep=4pt, inner ysep=2pt,
+    fill=lavender, text=brand,
+  },
+}
